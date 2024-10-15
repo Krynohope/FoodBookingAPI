@@ -18,7 +18,27 @@ const {
     updateOrderStatus
 } = require('../controllers/adminController');
 
+
+var multer = require('multer');
+let storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './public/images')
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+})
+function checkFileUpLoad(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+        return cb(new Error('Bạn chỉ được upload file ảnh'));
+    }
+    cb(null, true);
+}
+let upload = multer({ storage: storage, fileFilter: checkFileUpLoad })
+
+
 router.use(authMiddleware('admin'));
+
 
 // Quản lý người dùng
 router.get('/users', getUsers);

@@ -34,7 +34,6 @@ exports.updateProfile = async (req, res) => {
         let user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Nếu cập nhật mật khẩu, mã hóa trước khi lưu
         if (password) {
             const salt = await bcrypt.genSalt(10);
             userFields.password = await bcrypt.hash(password, salt);
