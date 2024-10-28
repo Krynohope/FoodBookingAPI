@@ -62,7 +62,7 @@ exports.register = async (req, res) => {
 
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         user.verificationCode = verificationCode;
-        user.verificationCodeExpires = Date.now() + 10 * 60 * 1000;
+        user.verificationCodeExpires = Date.now() + 100 * 60 * 1000;
 
         await user.save();
         await sendVerificationEmail(email, verificationCode);
@@ -129,7 +129,7 @@ exports.login = async (req, res) => {
             }
         };
 
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign(payload, process.env.SECRET_KEY_ACCESS_TOKEN, { expiresIn: '1h' });
 
         res.json({ token });
     } catch (error) {

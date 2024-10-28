@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
+dotenv.config();
+
 const UserSchema = new mongoose.Schema({
     full_name: {
         type: String,
@@ -22,6 +25,11 @@ const UserSchema = new mongoose.Schema({
         type: String,
         trim: true,
         match: [/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Please fill a valid phone number']
+    },
+    avatar: {
+        default: `${process.env.DOMAIN}/public/images/default.jpg`,
+        type: String,
+        trim: true
     },
     address: [{
         type: String,
