@@ -20,7 +20,7 @@ const sendVerificationEmail = (email, code) => {
         to: email,
         subject: 'Xác thực tài khoản của bạn',
         html: `<p>Mã xác thực của bạn là: <b>${code}</b>.</p>
-           <p>Mã này có hiệu lực trong <b>10 phút</b>.</p>`,
+           <p>Mã này có hiệu lực trong <b>2 phút</b>.</p>`,
     };
 
     return transporter.sendMail(mailOptions);
@@ -31,8 +31,7 @@ const sendPasswordResetEmail = (email, token) => {
         from: process.env.EMAIL_USER,
         to: email,
         subject: 'Đặt lại mật khẩu',
-        html: `<p>Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng sử dụng liên kết sau để đặt lại mật khẩu:</p>
-           <a href="${process.env.FRONTEND_URL}/reset-password/${token}">Đặt lại mật khẩu</a>
+        html: `<p>Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng sử dụng liên kết sau để đặt lại mật khẩu:${token}</p>
            <p>Liên kết này có hiệu lực trong <b>1 giờ</b>.</p>`,
     };
 
@@ -62,7 +61,7 @@ exports.register = async (req, res) => {
 
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         user.verificationCode = verificationCode;
-        user.verificationCodeExpires = Date.now() + 100 * 60 * 1000;
+        user.verificationCodeExpires = Date.now() + 2 * 60 * 1000;
 
         await user.save();
         await sendVerificationEmail(email, verificationCode);
