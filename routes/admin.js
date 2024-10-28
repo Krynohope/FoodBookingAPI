@@ -1,67 +1,156 @@
 const express = require('express');
 const router = express.Router();
+const { check } = require('express-validator');
 const authMiddleware = require('../middlewares/authMiddleware');
-const {
-    getUsers,
-    createUser,
-    updateUser,
-    deleteUser,
-    getMenus,
-    createMenu,
-    updateMenu,
-    deleteMenu,
-    getDishes,
-    createDish,
-    updateDish,
-    deleteDish,
-    getOrders,
-    updateOrderStatus
-} = require('../controllers/adminController');
+const userController = require('../controllers/userController');
+const menuController = require('../controllers/menuController');
+const categoryController = require('../controllers/categoryController');
+const orderController = require('../controllers/orderController');
 
-
-var multer = require('multer');
-let storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './public/images')
+// Multer configuration for file uploads
+const multer = require('multer');
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, './public/images');
     },
-    filename: function (req, file, cb) {
-        cb(null, file.originalname)
+    filename: (req, file, cb) => {
+        // Add timestamp to prevent filename conflicts
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + file.originalname);
     }
-})
-function checkFileUpLoad(req, file, cb) {
+});
+
+const fileFilter = (req, file, cb) => {
     if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-        return cb(new Error('Bạn chỉ được upload file ảnh'));
+        return cb(new Error('Only image files are allowed!'));
     }
     cb(null, true);
-}
-let upload = multer({ storage: storage, fileFilter: checkFileUpLoad })
+};
 
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+});
 
+// Apply admin middleware to all routes
 router.use(authMiddleware('admin'));
 
+// User Management Routes
+router.get('/users', [
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 })
+], userController.getAllUsers);
 
-// Quản lý người dùng
-router.get('/users', getUsers);
-router.post('/users', createUser);
-router.put('/users/:id', updateUser);
-router.delete('/users/:id', deleteUser);
+router.post('/users', [
+    check('full_name', 'Full name is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
+    check('role').optional().isIn(['customer', 'admin']),
+    check('phone_number').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
+], userController.createUser);
 
-// Quản lý menu
-router.get('/menus', getMenus);
-router.post('/menus', createMenu);
-router.put('/menus/:id', updateMenu);
-router.delete('/menus/:id', deleteMenu);
+router.put('/users/:id', [
+    check('full_name').optional().not().isEmpty(),
+    check('email').optional().isEmail(),
+    check('role').optional().isIn(['customer', 'admin']),
+    check('phone_number').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
+], userController.updateUser);
 
-// Quản lý món ăn
-router.get('/dishes', getDishes);
-router.post('/dishes', createDish);
-router.put('/dishes/:id', updateDish);
-router.delete('/dishes/:id', deleteDish);
+router.delete('/users/:id', userController.deleteUser);
 
-// Quản lý đơn hàng
-router.get('/orders', getOrders);
-router.put('/orders/:id/status', updateOrderStatus);
+// Menu Management Routes
+router.get('/menus', [
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 })
+], menuController.getMenuItems);
 
+router.post('/menus', [
+    upload.single('image'),
+    check('name', 'Name is required').not().isEmpty(),
+    check('price', 'Price must be a positive number').isFloat({ min: 0 }),
+    check('category_id', 'Category ID is required').not().isEmpty(),
+    check('description').optional().trim()
+], menuController.createMenuItem);
 
+router.put('/menus/:id', [
+    upload.single('image'),
+    check('name').optional().not().isEmpty(),
+    check('price').optional().isFloat({ min: 0 }),
+    check('category_id').optional().not().isEmpty(),
+    check('description').optional().trim()
+], menuController.updateMenuItem);
+
+router.delete('/menus/:id', menuController.deleteMenuItem);
+
+// Category Management Routes
+router.get('/categories', [
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 })
+], categoryController.getCategories);
+
+router.post('/categories', [
+    check('name', 'Category name is required').not().isEmpty(),
+    check('description').optional().trim()
+], categoryController.createCategory);
+
+router.put('/categories/:id', [
+    check('name').optional().not().isEmpty(),
+    check('description').optional().trim()
+], categoryController.updateCategory);
+
+router.delete('/categories/:id', categoryController.deleteCategory);
+
+// Order Management Routes
+router.get('/orders', [
+    check('page').optional().isInt({ min: 1 }),
+    check('limit').optional().isInt({ min: 1, max: 100 }),
+    check('status').optional().isIn(['pending', 'processing', 'completed', 'cancelled']),
+    check('startDate').optional().isISO8601(),
+    check('endDate').optional().isISO8601()
+], orderController.getAllOrders);
+
+router.put('/orders/:id/status', [
+    check('status').isIn(['pending', 'processing', 'completed', 'cancelled']),
+    check('payment_status').optional().isIn(['pending', 'paid', 'failed', 'refunded'])
+], orderController.updateOrderStatus);
+
+// Dashboard Statistics
+router.get('/stats/orders', orderController.getOrderStats);
+
+router.get('/stats/overview', async (req, res) => {
+    try {
+        // This route would combine various statistics
+        const [orderStats, userStats, menuStats] = await Promise.all([
+            orderController.getOrderStats(),
+            userController.getUserStats(),
+            menuController.getMenuStats()
+        ]);
+
+        res.json({
+            orders: orderStats,
+            users: userStats,
+            menu: menuStats
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching dashboard statistics' });
+    }
+});
+
+// Error handling for file uploads
+router.use((error, req, res, next) => {
+    if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ message: 'File is too large. Maximum size is 5MB' });
+        }
+        return res.status(400).json({ message: error.message });
+    }
+    if (error) {
+        return res.status(400).json({ message: error.message });
+    }
+    next();
+});
 
 module.exports = router;

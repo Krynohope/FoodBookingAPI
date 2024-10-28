@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-
 const UserSchema = new mongoose.Schema({
     full_name: {
         type: String,
@@ -13,6 +12,7 @@ const UserSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true,
+        match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
     },
     password: {
         type: String,
@@ -21,11 +21,12 @@ const UserSchema = new mongoose.Schema({
     phone_number: {
         type: String,
         trim: true,
+        match: [/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Please fill a valid phone number']
     },
-    address: {
+    address: [{
         type: String,
-        trim: true,
-    },
+        trim: true
+    }],
     role: {
         type: String,
         enum: ['customer', 'admin'],
@@ -35,18 +36,10 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    verificationCode: {
-        type: String,
-    },
-    verificationCodeExpires: {
-        type: Date,
-    },
-    resetPasswordToken: {
-        type: String,
-    },
-    resetPasswordExpires: {
-        type: Date,
-    },
+    verificationCode: String,
+    verificationCodeExpires: Date,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
 }, { timestamps: true });
 
 UserSchema.pre('save', async function (next) {

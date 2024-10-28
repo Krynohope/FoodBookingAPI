@@ -21,8 +21,8 @@ var app = express();
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
+const categoryRoutes = require('./routes/categories');
 const menuRoutes = require('./routes/menus');
-const dishRoutes = require('./routes/dishes');
 const orderRoutes = require('./routes/orders');
 const { connectDb } = require('./config/connect');
 connectDb()
@@ -43,8 +43,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/category', categoryRoutes);
 app.use('/api/menus', menuRoutes);
-app.use('/api/dishes', dishRoutes);
 app.use('/api/orders', orderRoutes);
 
 
