@@ -1,40 +1,59 @@
 const mongoose = require('mongoose');
 
 const OrderSchema = new mongoose.Schema({
-    user: {
+    order_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        default: mongoose.Types.ObjectId,
+        primary: true
+    },
+    user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
-    total_price: {
-        type: mongoose.Decimal128,
-        required: true,
-        get: getDecimal,
-        set: setDecimal,
-    },
     status: {
         type: String,
-        enum: ['Pending', 'Processing', 'Completed', 'Canceled'],
-        default: 'Pending',
+        required: true,
+        trim: true,
     },
+    total: {
+        type: Number,
+        required: true,
+    },
+
     payment_method: {
         type: String,
-        enum: ['Cash', 'Credit Card', 'E-Wallet'],
-        default: 'Cash',
+        required: true,
+        trim: true,
     },
+    payment_status: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+
     shipping_address: {
         type: String,
         required: true,
         trim: true,
     },
+
+    orderDetail: {
+        menu_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Menu',
+            required: true,
+        },
+        quantity: {
+            type: Number,
+            required: true,
+        },
+        price: {
+            type: Number,
+            required: true,
+        },
+    },
+
 }, { timestamps: true });
-
-function getDecimal(value) {
-    return parseFloat(value.toString());
-}
-
-function setDecimal(value) {
-    return mongoose.Types.Decimal128.fromString(value.toString());
-}
 
 module.exports = mongoose.model('Order', OrderSchema);
