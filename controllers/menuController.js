@@ -19,9 +19,9 @@ exports.getMenuItems = async (req, res) => {
         // Build filter object
         const filter = {};
 
-        // Add category filter if provided
+        // Add category filter
         if (req.query.category_id) {
-            // Check if category exists
+
             const category = await Category.findById(req.query.category_id);
             if (!category) {
                 return res.status(404).json({ message: 'Category not found' });
@@ -29,7 +29,12 @@ exports.getMenuItems = async (req, res) => {
             filter.category = req.query.category_id;
         }
 
-        // Add price range filter if provided
+        // Add  filter by name
+        if (req.query.name) {
+            filter.name = { $regex: req.query.name, $options: 'i' };
+        }
+
+        // Add price range filter 
         if (req.query.minPrice || req.query.maxPrice) {
             filter.price = {};
             if (req.query.minPrice) filter.price.$gte = parseFloat(req.query.minPrice);
