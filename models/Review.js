@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
 const ReviewSchema = new mongoose.Schema({
-    review_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        default: mongoose.Types.ObjectId,
-        primary: true
-    },
+
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
