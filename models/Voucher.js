@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
 const VoucherSchema = new mongoose.Schema({
-    voucher_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        default: mongoose.Types.ObjectId,
-        primary: true
-    },
+
     discount_percent: {
         type: Number,
         required: true,

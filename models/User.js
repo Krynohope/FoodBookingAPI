@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 dotenv.config();
 
 const UserSchema = new mongoose.Schema({
-    full_name: {
+    fullname: {
         type: String,
         required: true,
         trim: true,
