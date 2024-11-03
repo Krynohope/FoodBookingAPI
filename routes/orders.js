@@ -11,7 +11,7 @@ router.post('/', [
         check('menu_id', 'Menu ID is required').not().isEmpty(),
         check('quantity', 'Quantity must be at least 1').isInt({ min: 1 }),
         check('shipping_address', 'Shipping address is required').not().isEmpty(),
-        check('payment_method', 'Payment method is required').isIn(['Cash', 'Credit Card', 'E-Wallet'])
+        check('payment_method', 'Payment method is required').isIn(['Thanh toán khi nhận hàng', 'Zalopay'])
     ]
 ], orderController.createOrder);
 

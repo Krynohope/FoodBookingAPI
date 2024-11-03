@@ -123,6 +123,9 @@ exports.updateProfile = async (req, res) => {
 };
 
 
+
+
+
 // Admin method
 
 
@@ -174,7 +177,7 @@ exports.createUser = async (req, res) => {
             full_name,
             email,
             password,
-            avatar: 'http://localhost:3000/public/images/default.jgp',
+            avatar: 'http://localhost:3000/public/images/default.jpg',
             phone_number,
             address
         });
