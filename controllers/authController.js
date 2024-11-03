@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
+
 dotenv.config();
 
 var transporter = nodemailer.createTransport({
@@ -14,7 +16,7 @@ var transporter = nodemailer.createTransport({
     }
 });
 
-const sendVerificationEmail = (email, code) => {
+const sendVerification = (email, code) => {
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
@@ -45,14 +47,14 @@ exports.register = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { full_name, email, password, phone_number, address } = req.body;
+    const { fullname, email, password, phone_number, address } = req.body;
 
     try {
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ message: 'Email already exists' });
 
         user = new User({
-            full_name,
+            fullname,
             email,
             password,
             phone_number,
@@ -62,11 +64,12 @@ exports.register = async (req, res) => {
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         user.verificationCode = verificationCode;
         user.verificationCodeExpires = Date.now() + 2 * 60 * 1000;
-
         await user.save();
-        await sendVerificationEmail(email, verificationCode);
 
-        res.status(201).json({ message: 'User registered successfully. Please check your email to verify your account.' });
+        await sendVerification(email, verificationCode);
+
+        return res.status(201).json({ message: 'User registered successfully. Please check your email to verify your account.' });
+
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
@@ -91,15 +94,52 @@ exports.verifyEmail = async (req, res) => {
         user.isVerified = true;
         user.verificationCode = undefined;
         user.verificationCodeExpires = undefined;
-
         await user.save();
 
-        res.json({ message: 'Email verified successfully' });
+
+        return res.json({ message: 'Email verified successfully' });
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
     }
 };
+
+// Resend OTP 
+exports.resendVerificationCode = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ msg: 'Email is already verified' });
+        }
+
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        const verificationCodeExpires = new Date(Date.now() + 2 * 60 * 1000);
+
+        user.verificationCode = verificationCode;
+        user.verificationCodeExpires = verificationCodeExpires;
+        await User.findOneAndUpdate({ email: user.email }, { verificationCode: verificationCode, verificationCodeExpires: verificationCodeExpires })
+
+        await sendVerification(user.email, verificationCode);
+
+        return res.json({ msg: 'New verification code has been sent to your email' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
 
 // Signin
 exports.login = async (req, res) => {
@@ -112,14 +152,14 @@ exports.login = async (req, res) => {
 
     try {
         let user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: 'Invalid Credentials' });
+        if (!user) return res.status(400).json({ message: 'User not found' });
 
         if (!user.isVerified) {
             return res.status(400).json({ message: 'Please verify your email before logging in' });
         }
 
         const isMatch = await user.comparePassword(password);
-        if (!isMatch) return res.status(400).json({ message: 'Invalid Credentials' });
+        if (!isMatch) return res.status(400).json({ message: 'Password does not match' });
 
         const payload = {
             user: {
@@ -130,10 +170,37 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign(payload, process.env.SECRET_KEY_ACCESS_TOKEN, { expiresIn: '1h' });
 
-        res.json({ token });
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000,
+            path: '/'
+        };
+
+        res.cookie('access_token', token, cookieOptions);
+
+        return res.json({ token });
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
+    }
+};
+
+exports.logout = async (req, res) => {
+    try {
+
+        res.clearCookie('access_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        });
+
+        res.json({ msg: 'Logged out successfully' });
+    } catch (err) {
+        console.error('Logout error:', err.message);
+        res.status(500).send('Server error');
     }
 };
 
@@ -185,5 +252,60 @@ exports.resetPassword = async (req, res) => {
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
+    }
+};
+
+//Change password
+exports.changePassword = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { currentPassword, newPassword, verificationCode } = req.body;
+
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!verificationCode || !user.verificationCode) {
+
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ message: 'Current password is incorrect' });
+            }
+
+            const newVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            await User.findOneAndUpdate(
+                { _id: req.user.id },
+                {
+                    verificationCode: newVerificationCode,
+                }
+            );
+
+            await sendVerification(user.email, newVerificationCode);
+
+            return res.status(200).json({
+                message: 'Verification code has been sent to your email'
+            });
+        }
+
+        if (user.verificationCode != verificationCode) {
+            return res.status(400).json({ message: 'Invalid verification code' });
+        }
+
+        user.verificationCode = undefined;
+        user.password = newPassword;
+        await user.save();
+
+        return res.status(200).json({
+            message: 'Change password successfully !'
+        });
+    } catch (error) {
+        console.error('Error in changePassword:', error.message);
+        res.status(500).json({ message: 'Server Error' });
     }
 };
