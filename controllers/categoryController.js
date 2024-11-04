@@ -1,122 +1,162 @@
 const { validationResult } = require('express-validator');
 const Category = require('../models/Category');
+const { removeUploadedFile } = require('../middlewares/uploadFile');
+const path = require('path');
+const fs = require('fs');
 
-// Get categories with pagination
+// Get categories with name filter
 exports.getCategories = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
+        const name = req.query.name;
 
-        const total = await Category.countDocuments();
-        const categories = await Category.find()
+        let query = {};
+        if (name) {
+            query.name = { $regex: name, $options: 'i' };
+        }
+
+        const total = await Category.countDocuments(query);
+        const categories = await Category.find(query)
             .select('-__v')
-            .sort({ created_at: -1 })
-            .skip(skip)
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
             .limit(limit);
 
         res.json({
-            categories,
-            pagination: {
-                currentPage: page,
-                totalPages: Math.ceil(total / limit),
-                totalItems: total,
-                itemsPerPage: limit
+            success: true,
+            data: {
+                categories,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(total / limit),
+                    totalItems: total,
+                    itemsPerPage: limit
+                }
             }
         });
     } catch (error) {
-        console.error(error.message);
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Get categories error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching categories'
+        });
     }
 };
 
-// Get category by ID
+// Get single category
 exports.getCategoryById = async (req, res) => {
     try {
         const category = await Category.findById(req.params.id).select('-__v');
         if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Category not found'
+            });
         }
-        res.json(category);
+        res.json({ success: true, data: category });
     } catch (error) {
-        console.error(error.message);
-        if (error.kind === 'ObjectId') {
-            return res.status(400).json({ message: 'Invalid category ID' });
-        }
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Get category error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching category'
+        });
     }
 };
 
-// Create new category
+// Create category
 exports.createCategory = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { name, description, img } = req.body;
-
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            if (req.file) {
+                removeUploadedFile(req.file.path);
+            }
+            return res.status(400).json({
+                success: false,
+                errors: errors.array()
+            });
+        }
+
+        const { name, description } = req.body;
+        const imgPath = req.file ? `${process.env.DOMAIN}/images/${req.file.filename}` : null;
+
         const category = new Category({
             name,
             description,
-            img
+            img: imgPath
         });
 
         await category.save();
 
         res.status(201).json({
+            success: true,
             message: 'Category created successfully',
-            category
+            data: category
         });
+
     } catch (error) {
-        console.error(error.message);
-        res.status(500).json({ message: 'Server Error' });
+        if (req.file) {
+            removeUploadedFile(req.file.path);
+        }
+        console.error('Create category error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error creating category'
+        });
     }
 };
 
 // Update category
 exports.updateCategory = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { name, description, img } = req.body;
-
     try {
         let category = await Category.findById(req.params.id);
         if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+            if (req.file) {
+                removeUploadedFile(req.file.path);
+            }
+            return res.status(404).json({
+                success: false,
+                message: 'Category not found'
+            });
         }
 
-        const updateFields = {
-            name,
-            description,
-            img,
-        };
+        const updateData = {};
+        if (req.body.name) updateData.name = req.body.name;
+        if (req.body.description) updateData.description = req.body.description;
 
-        // Only include fields that are provided in the request
-        Object.keys(updateFields).forEach(key =>
-            updateFields[key] === undefined && delete updateFields[key]
-        );
+        if (req.file) {
+            // Remove old image if exists
+            if (category.img) {
+                const oldPath = path.join('public', category.img);
+                if (fs.existsSync(oldPath)) {
+                    fs.unlinkSync(oldPath);
+                }
+            }
+            updateData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+        }
 
         category = await Category.findByIdAndUpdate(
             req.params.id,
-            { $set: updateFields },
+            updateData,
             { new: true, runValidators: true }
-        ).select('-__v');
+        );
 
         res.json({
+            success: true,
             message: 'Category updated successfully',
-            category
+            data: category
         });
+
     } catch (error) {
-        console.error(error.message);
-        if (error.kind === 'ObjectId') {
-            return res.status(400).json({ message: 'Invalid category ID' });
+        if (req.file) {
+            removeUploadedFile(req.file.path);
         }
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Update category error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating category'
+        });
     }
 };
 
@@ -125,20 +165,33 @@ exports.deleteCategory = async (req, res) => {
     try {
         const category = await Category.findById(req.params.id);
         if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Category not found'
+            });
         }
 
-        await Category.findByIdAndDelete(req.params.id);
+        // Remove image if exists
+        if (category.img) {
+            const imagePath = path.join('public', category.img);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
+
+        await category.deleteOne();
 
         res.json({
+            success: true,
             message: 'Category deleted successfully',
-            category_id: req.params.id
+            data: { id: req.params.id }
         });
+
     } catch (error) {
-        console.error(error.message);
-        if (error.kind === 'ObjectId') {
-            return res.status(400).json({ message: 'Invalid category ID' });
-        }
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Delete category error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting category'
+        });
     }
 };

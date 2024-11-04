@@ -6,37 +6,10 @@ const userController = require('../controllers/userController');
 const menuController = require('../controllers/menuController');
 const categoryController = require('../controllers/categoryController');
 const orderController = require('../controllers/orderController');
+const { upload, handleMulterError } = require('../middlewares/uploadFile');
 
-// Multer configuration for file uploads
-const multer = require('multer');
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, './public/images');
-    },
-    filename: (req, file, cb) => {
-        // Add timestamp to prevent filename conflicts
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + '-' + file.originalname);
-    }
-});
-
-const fileFilter = (req, file, cb) => {
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-        return cb(new Error('Only image files are allowed!'));
-    }
-    cb(null, true);
-};
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
-    }
-});
-
-// Apply admin middleware to all routes
 router.use(authMiddleware('admin'));
+
 
 // User Management Routes
 router.get('/users', [
@@ -61,6 +34,7 @@ router.put('/users/:id', [
 
 router.delete('/users/:id', userController.deleteUser);
 
+
 // Menu Management Routes
 router.get('/menus', [
     check('page').optional().isInt({ min: 1 }),
@@ -68,40 +42,41 @@ router.get('/menus', [
 ], menuController.getMenuItems);
 
 router.post('/menus', [
-    upload.single('image'),
+    upload.single('img'),
     check('name', 'Name is required').not().isEmpty(),
     check('price', 'Price must be a positive number').isFloat({ min: 0 }),
-    check('category_id', 'Category ID is required').not().isEmpty(),
+    check('quantity', 'Quantity must be a positive number').isFloat({ min: 0 }),
+    check('category', 'Category  is required').not().isEmpty(),
     check('description').optional().trim()
 ], menuController.createMenuItem);
 
-router.put('/menus/:id', [
-    upload.single('image'),
+router.patch('/menus/:id', [
+    upload.single('img'),
     check('name').optional().not().isEmpty(),
     check('price').optional().isFloat({ min: 0 }),
-    check('category_id').optional().not().isEmpty(),
+    check('quantity').optional().isFloat({ min: 0 }),
+    check('category').optional().not().isEmpty(),
     check('description').optional().trim()
 ], menuController.updateMenuItem);
 
 router.delete('/menus/:id', menuController.deleteMenuItem);
 
+
 // Category Management Routes
-router.get('/categories', [
-    check('page').optional().isInt({ min: 1 }),
-    check('limit').optional().isInt({ min: 1, max: 100 })
-], categoryController.getCategories);
+router.post('/cate/',
+    upload.single('img'),
+    handleMulterError,
+    categoryController.createCategory
+);
 
-router.post('/categories', [
-    check('name', 'Category name is required').not().isEmpty(),
-    check('description').optional().trim()
-], categoryController.createCategory);
+router.patch('/cate/:id',
+    upload.single('img'),
+    handleMulterError,
+    categoryController.updateCategory
+);
 
-router.put('/categories/:id', [
-    check('name').optional().not().isEmpty(),
-    check('description').optional().trim()
-], categoryController.updateCategory);
 
-router.delete('/categories/:id', categoryController.deleteCategory);
+router.delete('/cate/:id', categoryController.deleteCategory);
 
 // Order Management Routes
 router.get('/orders', [
@@ -112,9 +87,12 @@ router.get('/orders', [
     check('endDate').optional().isISO8601()
 ], orderController.getAllOrders);
 
-router.put('/orders/:id/status', [
-    check('status').isIn(['pending', 'processing', 'completed', 'cancelled']),
-    check('payment_status').optional().isIn(['pending', 'paid', 'failed', 'refunded'])
+router.patch('/orders/:id/status', [
+    authMiddleware('admin'),
+    [
+        check('status').optional().isIn(['pending', 'processing', 'completed', 'cancelled']),
+        check('payment_status').optional().isIn(['pending', 'paid', 'failed', 'refunded'])
+    ]
 ], orderController.updateOrderStatus);
 
 // Dashboard Statistics

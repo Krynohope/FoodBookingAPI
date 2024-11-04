@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+require('./User')
+require('./Menu')
 
 const OrderSchema = new mongoose.Schema({
     order_id: {

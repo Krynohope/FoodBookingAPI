@@ -37,35 +37,31 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        // If there's a file uploaded but validation failed, remove it
         if (req.file) {
-            fs.unlink(req.file.path, (err) => {
-                if (err) console.error('Error removing uploaded file:', err);
-            });
+            removeUploadedFile(req.file.path);
         }
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { full_name, email, password, phone_number, address } = req.body;
+    const { fullname, email, password, phone_number, address } = req.body;
 
     const userFields = {};
-    if (full_name) userFields.full_name = full_name;
+    if (fullname) userFields.fullname = fullname;
     if (email) userFields.email = email;
-    if (phone_number) userFields.phone_number = phone_number;
+    if (phone) userFields.phone = phone;
     if (address) userFields.address = address;
+    if (password) userFields.password = password;
 
     // Handle avatar upload
     if (req.file) {
-        userFields.avatar = req.file.filename;
+        userFields.avatar = `${process.env.DOMAIN}/images/${req.file.filename}`;
     }
 
     try {
         let user = await User.findById(req.user.id);
         if (!user) {
             if (req.file) {
-                fs.unlink(req.file.path, (err) => {
-                    if (err) console.error('Error removing uploaded file:', err);
-                });
+                removeUploadedFile(req.file.path);
             }
             return res.status(404).json({ message: 'User not found' });
         }
@@ -74,27 +70,18 @@ exports.updateProfile = async (req, res) => {
             const emailExists = await User.findOne({ email });
             if (emailExists) {
                 if (req.file) {
-                    fs.unlink(req.file.path, (err) => {
-                        if (err) console.error('Error removing uploaded file:', err);
-                    });
+                    removeUploadedFile(req.file.path);
                 }
                 return res.status(400).json({ message: 'Email already in use' });
             }
         }
 
-        if (password) {
-            const salt = await bcrypt.genSalt(10);
-            userFields.password = await bcrypt.hash(password, salt);
-        }
 
-        // If there's a new avatar, remove the old one
         if (req.file && user.avatar) {
-            const oldAvatarPath = path.join('./public/images', user.avatar);
-            fs.unlink(oldAvatarPath, (err) => {
-                if (err && err.code !== 'ENOENT') {
-                    console.error('Error removing old avatar:', err);
-                }
-            });
+            const oldPath = path.join('public', user.avatar.replace(process.env.DOMAIN, ''));
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath);
+            }
         }
 
         user = await User.findByIdAndUpdate(
@@ -103,19 +90,14 @@ exports.updateProfile = async (req, res) => {
             { new: true }
         ).select('-password');
 
-        // Add full avatar URL to response
-        const userResponse = user.toObject();
-        if (userResponse.avatar) {
-            userResponse.avatarUrl = `/images/${userResponse.avatar}`;
-        }
-
-        res.json(userResponse);
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: user
+        });
     } catch (error) {
-        // Clean up uploaded file if there's an error
         if (req.file) {
-            fs.unlink(req.file.path, (err) => {
-                if (err) console.error('Error removing uploaded file:', err);
-            });
+            removeUploadedFile(req.file.path);
         }
         console.error('Error in updateProfile:', error.message);
         res.status(500).json({ message: 'Server Error' });
@@ -127,8 +109,6 @@ exports.updateProfile = async (req, res) => {
 
 
 // Admin method
-
-
 //  Get all users with pagi
 exports.getAllUsers = async (req, res) => {
     try {
@@ -165,7 +145,7 @@ exports.createUser = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { full_name, email, password, phone_number, address } = req.body;
+    const { fullname, email, password, phone, address } = req.body;
 
     try {
         let user = await User.findOne({ email });
@@ -174,16 +154,13 @@ exports.createUser = async (req, res) => {
         }
 
         user = new User({
-            full_name,
+            fullname,
             email,
             password,
-            avatar: 'http://localhost:3000/public/images/default.jpg',
-            phone_number,
-            address
+            phone,
+            address: [address]
         });
 
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
 
         await user.save();
 
