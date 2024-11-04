@@ -59,6 +59,7 @@ exports.getMenuItems = async (req, res) => {
 
         const menuItems = await Menu.find(filter)
             .populate('category', 'name')
+            .sort(sortOption)
             .skip(skip)
             .limit(limit)
             .lean();
@@ -72,10 +73,12 @@ exports.getMenuItems = async (req, res) => {
             totalPages,
             totalMenuItems,
             limit,
+
             filters: {
                 category: req.query.category_id,
                 minPrice: req.query.minPrice,
-                maxPrice: req.query.maxPrice
+                maxPrice: req.query.maxPrice,
+                sort: req.query.sort
             }
         });
     } catch (error) {
