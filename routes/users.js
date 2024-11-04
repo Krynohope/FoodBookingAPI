@@ -9,7 +9,7 @@ router.use(authMiddleware());
 
 router.get('/profile', getProfile);
 
-router.put('/profile',
+router.patch('/profile',
     upload.single('avatar'),
     handleMulterError,
     [

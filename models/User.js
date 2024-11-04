@@ -31,6 +31,7 @@ const UserSchema = new mongoose.Schema({
         trim: true
     },
     address: [{
+        default: [],
         type: String,
         trim: true
     }],

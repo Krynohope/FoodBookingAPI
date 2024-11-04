@@ -42,18 +42,20 @@ router.get('/menus', [
 ], menuController.getMenuItems);
 
 router.post('/menus', [
-    upload.single('image'),
+    upload.single('img'),
     check('name', 'Name is required').not().isEmpty(),
     check('price', 'Price must be a positive number').isFloat({ min: 0 }),
-    check('category_id', 'Category ID is required').not().isEmpty(),
+    check('quantity', 'Quantity must be a positive number').isFloat({ min: 0 }),
+    check('category', 'Category  is required').not().isEmpty(),
     check('description').optional().trim()
 ], menuController.createMenuItem);
 
 router.patch('/menus/:id', [
-    upload.single('image'),
+    upload.single('img'),
     check('name').optional().not().isEmpty(),
     check('price').optional().isFloat({ min: 0 }),
-    check('category_id').optional().not().isEmpty(),
+    check('quantity').optional().isFloat({ min: 0 }),
+    check('category').optional().not().isEmpty(),
     check('description').optional().trim()
 ], menuController.updateMenuItem);
 

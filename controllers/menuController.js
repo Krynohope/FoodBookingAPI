@@ -1,8 +1,9 @@
 const { validationResult } = require('express-validator');
 const Menu = require('../models/Menu');
 const Category = require('../models/Category');
-const dotenv = require('dotenv');
-
+const { removeUploadedFile } = require('../middlewares/uploadFile');
+const path = require('path');
+const fs = require('fs');
 
 // Get menu items with optional filters and pagination
 exports.getMenuItems = async (req, res) => {
@@ -95,33 +96,44 @@ exports.getMenuItemById = async (req, res) => {
     }
 };
 
+
+//Create menu item
 exports.createMenuItem = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
-        }
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { category_id, name, description, price, variant } = req.body;
-
     try {
-        const category = await Category.findById(category_id);
-        if (!category) {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
             if (req.file) {
                 removeUploadedFile(req.file.path);
             }
-            return res.status(404).json({ message: 'Category not found' });
+            return res.status(400).json({
+                success: false,
+                errors: errors.array()
+            });
+        }
+
+        const { category, name, description, price, variant } = req.body;
+
+        const cate = await Category.findById(category);
+        if (!cate) {
+            if (req.file) {
+                removeUploadedFile(req.file.path);
+            }
+            return res.status(404).json({
+                success: false,
+                message: 'Category not found'
+            });
         }
 
         const menuItemData = {
-            category: category_id,
+            category,
             name,
             description,
-            price,
-            image: req.file ? `${process.env.DOMAIN}/images/menu/${req.file.filename}` : undefined,
+            price
         };
+
+        if (req.file) {
+            menuItemData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+        }
 
         if (variant && variant.size && variant.price) {
             menuItemData.variant = {
@@ -133,96 +145,134 @@ exports.createMenuItem = async (req, res) => {
         const menuItem = new Menu(menuItemData);
         await menuItem.save();
 
-        res.status(201).json({ message: 'Menu item created successfully', menuItem });
+        res.status(201).json({
+            success: true,
+            message: 'Menu item created successfully',
+            data: menuItem
+        });
     } catch (error) {
         if (req.file) {
             removeUploadedFile(req.file.path);
         }
-        console.error(error.message);
-        res.status(500).send('Server Error');
+        console.error('Create menu item error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error creating menu item'
+        });
     }
 };
 
 // Update menu item 
 exports.updateMenuItem = async (req, res) => {
-    const { category_id, name, description, price, variant } = req.body;
-
-    const menuFields = {};
-    if (category_id) menuFields.category = category_id;
-    if (name) menuFields.name = name;
-    if (description) menuFields.description = description;
-    if (price) menuFields.price = price;
-    if (req.file) {
-        menuFields.image = `${process.env.DOMAIN}/images/menu/${req.file.filename}`;
-    }
-
-    if (variant === null) {
-        menuFields.variant = undefined;
-    } else if (variant && variant.size && variant.price) {
-        menuFields.variant = {
-            size: variant.size,
-            price: variant.price
-        };
-    }
-
     try {
         let menuItem = await Menu.findById(req.params.id);
         if (!menuItem) {
             if (req.file) {
                 removeUploadedFile(req.file.path);
             }
-            return res.status(404).json({ message: 'Menu item not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Menu item not found'
+            });
         }
 
-        if (category_id) {
-            const category = await Category.findById(category_id);
-            if (!category) {
+        const { category, name, description, price, quantity, variant } = req.body;
+        const updateData = {};
+
+        if (category) {
+
+            const cate = await Category.findById(category);
+            if (!cate) {
                 if (req.file) {
                     removeUploadedFile(req.file.path);
                 }
-                return res.status(404).json({ message: 'Category not found' });
+                return res.status(404).json({
+                    success: false,
+                    message: 'Category not found'
+                });
             }
+            updateData.category = category;
         }
 
-        if (req.file && menuItem.image) {
-            const oldImagePath = path.join(__dirname, '..', 'public', menuItem.image);
-            removeUploadedFile(oldImagePath);
+        if (name) updateData.name = name;
+        if (description) updateData.description = description;
+        if (price) updateData.price = price;
+        if (quantity) updateData.quantity = quantity;
+
+        if (req.file) {
+            // Remove old image if exists
+            if (menuItem.img) {
+                const oldPath = path.join('public', menuItem.img);
+                if (fs.existsSync(oldPath)) {
+                    fs.unlinkSync(oldPath);
+                }
+            }
+            updateData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+        }
+
+        if (variant === null) {
+            updateData.variant = undefined;
+        } else if (variant && variant.size && variant.price) {
+            updateData.variant = {
+                size: variant.size,
+                price: variant.price
+            };
         }
 
         menuItem = await Menu.findByIdAndUpdate(
             req.params.id,
-            { $set: menuFields },
-            { new: true }
+            updateData,
+            { new: true, runValidators: true }
         ).populate('category', 'name');
 
-        res.json({ message: 'Menu item updated successfully', menuItem });
+        res.json({
+            success: true,
+            message: 'Menu item updated successfully',
+            data: menuItem
+        });
     } catch (error) {
         if (req.file) {
             removeUploadedFile(req.file.path);
         }
-        console.error(error.message);
-        res.status(500).send('Server Error');
+        console.error('Update menu item error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating menu item'
+        });
     }
 };
 
 // Delete menu item 
 exports.deleteMenuItem = async (req, res) => {
     try {
-        let menuItem = await Menu.findById(req.params.id);
+        const menuItem = await Menu.findById(req.params.id);
         if (!menuItem) {
-            return res.status(404).json({ message: 'Menu item not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Menu item not found'
+            });
         }
 
-        if (menuItem.image) {
-            const imagePath = path.join(__dirname, '..', 'public', menuItem.image);
-            removeUploadedFile(imagePath);
+        // Remove image if exists
+        if (menuItem.img) {
+            const imagePath = path.join('public', menuItem.img);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
         }
 
-        await Menu.findByIdAndRemove(req.params.id);
+        await menuItem.deleteOne();
 
-        res.json({ message: 'Menu item removed' });
+        res.json({
+            success: true,
+            message: 'Menu item deleted successfully',
+            data: { id: req.params.id }
+        });
     } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Server Error');
+        console.error('Delete menu item error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting menu item'
+        });
     }
 };

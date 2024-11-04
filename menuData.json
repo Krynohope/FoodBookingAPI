@@ -1,327 +1,367 @@
 [
   {
     "id": 1,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Cơm chiên thập cẩm",
     "image": "http://localhost:3000/images/anh1.png",
     "price": 45000,
+    "quantity": 100,
     "description": "Món ăn là cơm chiên hải sản. Cơm được chiên với nước sốt đậm đà, có tôm, gà, bông cải xanh và bông cải trắng. Món cơm được trang trí với hai con tôm lớn, trông rất hấp dẫn - Cơm, tôm, gà, bông cải xanh, bông cải trắng."
   },
   {
     "id": 2,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Cơm chiên trứng",
     "image": "http://localhost:3000/images/anh2.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là cơm chiên trứng. Cơm được chiên với trứng, cà rốt, hành lá và thịt băm. Trên cùng là một quả trứng chiên - Cơm, trứng, cà rốt, hành lá, thịt băm"
   },
   {
     "id": 3,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Cơm gà",
     "image": "http://localhost:3000/images/anh3.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là cơm gà rán. Gà được rán giòn, vàng ruộm, ăn kèm với cơm trắng, dưa chuột, cà chua, rau xanh và tương ớt - Cơm trắng, đùi gà rán, dưa chuột, cà chua, rau xanh, tương ớt."
   },
   {
     "id": 4,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Salad hải sản",
     "image": "http://localhost:3000/images/anh4.png",
     "price": 200000,
+    "quantity": 100,
     "description": "Món ăn là salad hải sản. Salad được làm từ tôm, mực, trai, cà chua, dưa chuột, hành lá, mùi tây, chanh - Tôm, mực, trai, cà chua, dưa chuột, hành lá, mùi tây, chanh."
   },
   {
     "id": 5,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Sushi roll",
     "image": "http://localhost:3000/images/anh5.png",
     "price": 120000,
+    "quantity": 100,
     "description": "Món ăn là sushi cuộn. Sushi được cuộn với cơm sushi, dưa chuột, cá hồi, rong biển, nước tương, wasabi - Cơm sushi, dưa chuột, cá hồi, rong biển, nước tương, wasabi."
   },
   {
     "id": 6,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Mì spaghetti với thịt viên",
     "image": "http://localhost:3000/images/anh6.png",
     "price": 90000,
+    "quantity": 100,
     "description": "Món ăn là mì Ý sốt cà chua với thịt viên. Mì Ý được nấu chín, trộn với sốt cà chua và thịt viên. Món ăn được trang trí với rau mùi - Mì Ý, thịt viên, sốt cà chua, rau mùi."
   },
   {
     "id": 7,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Món pasta hải sản",
     "image": "http://localhost:3000/images/anh7.png",
     "price": 130000,
+    "quantity": 100,
     "description": "Món ăn là mì Ý với tôm, cà chua bi, ớt chuông xanh, rau mùi tây và lá nguyệt quế - Mì Ý, tôm, cà chua bi, ớt chuông xanh, rau mùi tây, lá nguyệt quế."
   },
   {
     "id": 8,
-    "category": "Món khai vị",
+    "category": "672854c4d0271a6cb9031144",
     "name": "Salad hỗn hợp",
     "image": "http://localhost:3000/images/anh8.png",
     "price": 30000,
+    "quantity": 100,
     "description": "Món ăn là salad rau củ. Salad được làm từ xà lách, dưa chuột, cà chua, ớt chuông, hành lá - Xà lách, dưa chuột, cà chua, ớt chuông, hành lá."
   },
   {
     "id": 9,
-    "category": "Món khai vị",
+    "category": "672854c4d0271a6cb9031144",
     "name": "Salad kèm bò bít tết",
     "image": "http://localhost:3000/images/anh9.png",
     "price": 120000,
+    "quantity": 100,
     "description": "Món ăn là salad với thịt bò nướng và phô mai xanh. Salad được làm từ xà lách, cà chua, ớt chuông, phô mai xanh. Thịt bò được nướng chín, có màu nâu vàng - Salad, thịt bò nướng, phô mai xanh."
   },
   {
     "id": 10,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Spaghetti sốt cà chua",
     "image": "http://localhost:3000/images/anh10.png",
     "price": 75000,
+    "quantity": 100,
     "description": "Món ăn là mì Ý sốt cà chua với nấm, cà chua, phô mai parmesan và rau mùi tây - Mì Ý, nấm, cà chua, phô mai parmesan, rau mùi tây."
   },
   {
     "id": 11,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Thịt bò nướng",
     "image": "http://localhost:3000/images/anh11.png",
     "price": 200000,
+    "quantity": 100,
     "description": "Món ăn là thịt bò sốt nấm. Thịt bò được cắt lát, nấu chín, ăn kèm với nấm, cà chua bi và nước sốt - Thịt bò, nấm, cà chua bi, nước sốt."
   },
   {
     "id": 12,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Thịt heo nướng",
     "image": "http://localhost:3000/images/anh12.png",
     "price": 70000,
+    "quantity": 100,
     "description": "Món ăn là thịt heo nướng. Thịt heo được nướng chín, có màu nâu đỏ. Món ăn được trang trí với rau thơm và cải bắp - Thịt heo nướng, rau thơm, cải bắp."
   },
   {
     "id": 13,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Sườn heo nướng",
     "image": "http://localhost:3000/images/anh13.png",
     "price": 100000,
+    "quantity": 100,
     "description": "Món ăn là sườn sụn nướng. Sườn sụn được nướng chín, có màu nâu đỏ. Món ăn được trang trí với rau xanh - Sườn sụn, rau xanh."
   },
   {
     "id": 14,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Lưỡi bò nướng",
     "image": "http://localhost:3000/images/anh14.png",
     "price": 85000,
+    "quantity": 100,
     "description": "Món ăn là lưỡi bò sốt. Lưỡi bò được nấu chín, cắt lát, ăn kèm với đậu que, cà chua bi và nước sốt - Lưỡi bò, đậu que, cà chua bi, nước sốt."
   },
   {
     "id": 15,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Gà ta quay",
     "image": "http://localhost:3000/images/anh15.png",
     "price": 180000,
+    "quantity": 100,
     "description": "Món ăn là gà nướng. Gà được nướng chín, có màu vàng nâu. Món ăn được trang trí với lá hương thảo - Gà nướng, lá hương thảo"
   },
   {
     "id": 16,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Gà ta luộc",
     "image": "http://localhost:3000/images/anh16.png",
     "price": 160000,
+    "quantity": 100,
     "description": "Món ăn là gà luộc. Gà được luộc chín, có màu vàng nhạt - Gà luộc."
   },
   {
     "id": 17,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Cơm ức gà ",
     "image": "http://localhost:3000/images/anh17.png",
     "price": 50000,
+    "quantity": 100,
     "description": "Món ăn là gà nướng với cơm trắng, bông cải xanh, cà rốt và khoai tây. Gà được nướng chín, có màu vàng nâu - Gà nướng, cơm trắng, bông cải xanh, cà rốt, khoai tây."
   },
   {
     "id": 18,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Cánh gà nướng",
     "image": "http://localhost:3000/images/anh18.png",
     "price": 75000,
+    "quantity": 100,
     "description": "Món ăn là cánh gà chiên sốt mè. Cánh gà được chiên giòn, rắc mè, ăn kèm với rau xanh, cà chua và sốt mè - Cánh gà chiên, rau xanh, cà chua, sốt mè"
   },
   {
     "id": 19,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Tôm hùm nướng phô mai ",
     "image": "http://localhost:3000/images/anh19.png",
     "price": 650000,
+    "quantity": 100,
     "description": "Món ăn là tôm nướng. Tôm được nướng chín, có màu vàng nâu. Món ăn được trang trí với rau xanh - Tôm nướng, rau xanh."
   },
   {
     "id": 20,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Tôm càng nướng",
     "image": "http://localhost:3000/images/anh20.png",
     "price": 300000,
+    "quantity": 100,
     "description": "Món ăn là tôm sú nướng. Tôm sú được nướng chín, có màu đỏ cam. Món ăn được trang trí với rau xanh và cà rốt - Tôm sú nướng, rau xanh, cà rốt."
   },
   {
     "id": 21,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Mực nướng",
     "image": "http://localhost:3000/images/anh21.png",
     "price": 150000,
+    "quantity": 100,
     "description": "Món ăn là mực nướng. Mực được nướng chín, có màu đỏ nâu. Món ăn được trang trí với rau xanh và chanh - Mực nướng, rau xanh, chanh."
   },
   {
     "id": 22,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Mực ống nướng",
     "image": "http://localhost:3000/images/anh22.png",
     "price": 120000,
+    "quantity": 100,
     "description": "Món ăn là mực nướng. Mực được nướng chín, có màu hồng nhạt. Món ăn được ăn kèm với nước chấm - Mực nướng, nước chấm."
   },
   {
     "id": 23,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Gỏi cuốn",
     "image": "http://localhost:3000/images/anh23.png",
     "price": 70000,
+    "quantity": 100,
     "description": ""
   },
   {
     "id": 24,
-    "category": "Món chính",
+    "category": "67284ff0477d09c948ac4b72",
     "name": "Nem rán",
     "image": "http://localhost:3000/images/anh32.png",
     "price": 40000,
+    "quantity": 100,
     "description": "Món ăn là nem rán. Nem được rán giòn, có màu vàng nâu. Món ăn được trang trí với dưa chuột, cà chua, ớt - Nem rán, dưa chuột, cà chua, ớt."
   },
   {
     "id": 25,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Bánh tiramisu",
     "image": "http://localhost:3000/images/anh33.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là bánh tiramisu. Bánh được trang trí với lá bạc hà, sốt chocolate và bột cacao - Bánh tiramisu, lá bạc hà, sốt chocolate, bột cacao."
   },
   {
     "id": 26,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Bánh mousse",
     "image": "http://localhost:3000/images/anh34.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là bánh mousse sô cô la. Bánh được trang trí với dâu tây, lá bạc hà và sốt chocolate - Bánh mousse sô cô la, dâu tây, lá bạc hà, sốt chocolate."
   },
   {
     "id": 27,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Kem tươi",
     "image": "http://localhost:3000/images/anh35.png",
     "price": 45000,
+    "quantity": 100,
     "description": "Món ăn là kem. Kem có nhiều màu sắc: xanh lá, vàng, hồng, nâu. Kem được ăn kèm với bánh quế - Kem, bánh quế."
   },
   {
     "id": 28,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Bánh táo",
     "image": "http://localhost:3000/images/anh36.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là bánh táo. Bánh được làm từ lớp vỏ bánh giòn, nhân táo ngọt và phủ kem tươi - Bánh táo, kem tươi."
   },
   {
     "id": 29,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Bánh cheesecake",
     "image": "http://localhost:3000/images/anh37.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là bánh cheesecake. Bánh được trang trí với lá bạc hà, sốt caramel và hạnh nhân - Bánh cheesecake, lá bạc hà, sốt caramel, hạnh nhân."
   },
   {
     "id": 30,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Bánh flan",
     "image": "http://localhost:3000/images/anh38.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là bánh flan. Bánh được trang trí với trái cây, lá bạc hà và sốt caramel - Bánh flan, trái cây, lá bạc hà, sốt caramel."
   },
   {
     "id": 31,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Bánh dâu tây",
     "image": "http://localhost:3000/images/anh39.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là bánh dâu tây. Bánh được làm từ lớp vỏ bánh giòn, nhân kem và phủ dâu tây. Bánh được trang trí với lá bạc hà và sốt dâu tây - Bánh dâu tây, lá bạc hà, sốt dâu tây."
   },
   {
     "id": 32,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Kem dâu tằm",
     "image": "http://localhost:3000/images/anh40.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là kem dâu tằm. Kem có màu hồng nhạt, được trang trí với dâu tằm và lá bạc hà - Kem dâu tằm, dâu tằm, lá bạc hà."
   },
   {
     "id": 33,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Kem dâu",
     "image": "http://localhost:3000/images/anh41.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là kem dâu. Kem có màu hồng nhạt, được trang trí với dâu tây và lá bạc hà - Kem dâu, dâu tây, lá bạc hà."
   },
   {
     "id": 34,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Kem cam",
     "image": "http://localhost:3000/images/anh42.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là kem. Kem gồm 2 vị: cam và vàng. Kem được trang trí với lá bạc hà - Kem cam, kem vàng, lá bạc hà."
   },
   {
     "id": 35,
-    "category": "Món tráng miệng",
+    "category": "672851a0d8d0335ef8fc045a",
     "name": "Kem sô cô la",
     "image": "http://localhost:3000/images/anh43.png",
     "price": 35000,
+    "quantity": 100,
     "description": "Món ăn là kem sô cô la. Kem có màu nâu sẫm, được trang trí với sô cô la - Kem sô cô la, sô cô la."
   },
   {
     "id": 36,
-    "category": "Món khai vị",
+    "category": "672854c4d0271a6cb9031144",
     "name": "Salad thịt bằm",
     "image": "http://localhost:3000/images/anh44.png",
     "price": 70000,
+    "quantity": 100,
     "description": "Món ăn là salad thịt bằm. Salad gồm các loại rau xanh, cà chua, dưa chuột, bắp cải tím. Thịt bằm được trộn đều với salad - Salad, thịt bằm."
   },
   {
     "id": 37,
-    "category": "Món khai vị",
+    "category": "672854c4d0271a6cb9031144",
     "name": "Gỏi đu đủ",
     "image": "http://localhost:3000/images/anh45.png",
     "price": 45000,
+    "quantity": 100,
     "description": "Món ăn là gỏi đu đủ xanh. Gỏi đu đủ xanh được làm từ đu đủ xanh bào sợi, cà chua thái lát, đậu đũa thái nhỏ, lạc rang, ớt, rau xà lách. Gỏi đu đủ xanh được trộn với nước mắm, đường, chanh, tỏi, ớt - Gỏi đu đủ xanh, cà chua, đậu đũa, lạc rang, ớt, rau xà lách."
   },
   {
     "id": 38,
-    "category": "Món khai vị",
+    "category": "672854c4d0271a6cb9031144",
     "name": "Gỏi ghẹ",
     "image": "http://localhost:3000/images/anh46.png",
     "price": 70000,
+    "quantity": 100,
     "description": "Món ăn là gỏi ghẹ. Gỏi ghẹ được làm từ đu đủ xanh bào sợi, ghẹ, ớt, đậu đũa. Gỏi đu đủ xanh được trộn với nước mắm, đường, chanh, tỏi, ớt - Gỏi đu đủ xanh, ghẹ, ớt, đậu đũa."
   },
   {
     "id": 39,
-    "category": "Món khai vị",
+    "category": "672854c4d0271a6cb9031144",
     "name": "Súp gà",
     "image": "http://localhost:3000/images/anh47.png",
     "price": 65000,
+    "quantity": 100,
     "description": "Súp gà với mì nơ là một món ăn nhẹ nhàng, bổ dưỡng, thường được dùng trong các bữa ăn gia đình hoặc khi cần món ăn dễ tiêu. Nước dùng trong, thanh ngọt từ thịt gà và rau củ, kết hợp với sự mềm mại của mì nơ và thịt gà, tạo nên hương vị hài hòa - Gà, mì nơ, cà rốt, khoai tây, rau mùi"
   },
   {
     "id": 40,
-    "category": "Món khai vị",
+    "category": "672854c4d0271a6cb9031144",
     "name": "Súp cua",
     "image": "http://localhost:3000/images/anh48.png",
     "price": 165000,
+    "quantity": 100,
     "description": "Súp cua là một món ăn phổ biến và bổ dưỡng, thường xuất hiện trong các bữa tiệc hoặc làm món khai vị. Vị ngọt thanh của thịt cua, bắp và thanh cua hòa quyện cùng nước dùng sánh mịn. Món súp này thường được dùng nóng, dễ ăn và thích hợp cho mọi lứa tuổi, đặc biệt là trẻ em và người lớn tuổi - Thịt cua, bắp ngô, thanh cua, rau mùi"
   },
   {
     "id": 41,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước dừa",
     "image": "http://localhost:3000/images/anh23.png",
     "variant": [
@@ -338,11 +378,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước dừa tươi mát lạnh, được bổ sung thêm vị chua thanh của chanh tươi, hương thơm dịu nhẹ của bạc hà, tạo nên một thức uống giải nhiệt tuyệt vời. Nước dừa giàu vitamin, khoáng chất, tốt cho sức khỏe, giúp giải độc, thanh lọc cơ thể, cung cấp năng lượng. Hãy thưởng thức nước dừa tươi mát để tận hưởng hương vị nhiệt đới, sảng khoái! - Nước dừa tươi nguyên chất 100%, vỏ chanh tươi, lá bạc hà, đá viên"
   },
   {
     "id": 42,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép trái cây nhiệt đới",
     "image": "http://localhost:3000/images/anh24.png",
     "variant": [
@@ -359,11 +400,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Cocktail trái cây nhiệt đới với hương vị ngọt ngào, chua thanh mát, được pha chế từ những loại trái cây tươi ngon, mang đến cảm giác sảng khoái, thư giãn. Nước uống được trang trí với vỏ chanh tươi, tạo thêm hương vị thơm ngon và đẹp mắt. Đá viên giúp giữ lạnh, tạo cảm giác mát lạnh, sảng khoái. Hãy thưởng thức Cocktail trái cây nhiệt đới để tận hưởng hương vị mùa hè! - Nước ép trái cây nhiệt đới, vỏ chanh tươi, đá viên"
   },
   {
     "id": 43,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép chanh tươi",
     "image": "http://localhost:3000/images/anh25.png",
     "variant": [
@@ -380,11 +422,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước ép chanh tươi là thức uống thanh mát, sảng khoái, được pha chế từ nước ép chanh tươi, lá bạc hà, đá viên, mang đến hương vị thơm ngon, dễ chịu. Nước uống được trang trí với lá bạc hà tươi, tạo thêm hương thơm và đẹp mắt. Đá viên giúp giữ lạnh, tạo cảm giác mát lạnh, sảng khoái. Hãy thưởng thức nước ép chanh tươi để tận hưởng hương vị mùa hè! - Nước ép chanh tươi, lá bạc hà, đá viên"
   },
   {
     "id": 44,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Trà đá chanh",
     "image": "http://localhost:3000/images/anh26.png",
     "variant": [
@@ -401,11 +444,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Trà đá chanh là thức uống giải khát thơm ngon, được pha chế từ trà đen nguyên chất, chanh tươi, đá viên. Vị trà đen đậm đà, kết hợp với vị chua thanh mát của chanh tươi, tạo nên một thức uống sảng khoái, dễ chịu. Đá viên giúp giữ lạnh, tạo cảm giác mát lạnh, sảng khoái. Hãy thưởng thức trà đá chanh để tận hưởng hương vị thơm ngon, giải nhiệt ngày hè! - Trà đen nguyên chất, chanh tươi, đá viên"
   },
   {
     "id": 45,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép kiwi",
     "image": "http://localhost:3000/images/anh31.png",
     "variant": [
@@ -422,11 +466,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước ép kiwi được làm từ những trái kiwi tươi ngon, tuyển chọn kỹ càng, mang đến hương vị thơm ngon, chua ngọt thanh mát, sảng khoái. Nước ép kiwi chứa nhiều vitamin C, giúp tăng cường hệ miễn dịch, hỗ trợ tiêu hóa, đẹp da. Hãy thưởng thức nước ép kiwi mỗi ngày để bổ sung năng lượng và giữ gìn sức khỏe! - Nước ép kiwi nguyên chất 100%, không chứa đường, chất bảo quản"
   },
   {
     "id": 46,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép cam",
     "image": "http://localhost:3000/images/anh28.png",
     "variant": [
@@ -443,11 +488,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước cam ép được làm từ những trái cam tươi ngon, tuyển chọn kỹ càng, mang đến hương vị thơm ngon, ngọt thanh mát, bổ dưỡng. Nước cam ép chứa nhiều vitamin C, giúp tăng cường hệ miễn dịch, hỗ trợ tiêu hóa, đẹp da. Hãy thưởng thức nước cam ép mỗi ngày để bổ sung năng lượng và giữ gìn sức khỏe! - Nước cam ép nguyên chất 100%, không chứa đường, chất bảo quản"
   },
   {
     "id": 47,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Sinh tố rau xanh",
     "image": "http://localhost:3000/images/anh29.png",
     "variant": [
@@ -464,11 +510,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Sinh tố rau xanh là thức uống bổ dưỡng, giàu vitamin và khoáng chất, giúp tăng cường sức khỏe, thanh lọc cơ thể. Hương vị thanh mát, dễ uống, phù hợp cho mọi lứa tuổi. Hãy thưởng thức sinh tố rau xanh mỗi ngày để bổ sung năng lượng và giữ gìn sức khỏe! - Rau bina, dưa chuột, chuối, nước ép táo, rau mùi tây"
   },
   {
     "id": 48,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép cà rốt",
     "image": "http://localhost:3000/images/anh30.png",
     "variant": [
@@ -485,11 +532,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước ép cà rốt được làm từ những củ cà rốt tươi ngon, tuyển chọn kỹ càng, mang đến hương vị thơm ngon, ngọt dịu tự nhiên. Nước ép cà rốt chứa nhiều vitamin A, tốt cho mắt, giúp tăng cường thị lực, bảo vệ mắt khỏi các bệnh về mắt. Hãy thưởng thức nước ép cà rốt mỗi ngày để bổ sung vitamin A và giữ gìn sức khỏe! - Nước ép cà rốt nguyên chất 100%, không chứa đường, chất bảo quản"
   },
   {
     "id": 49,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép táo xanh",
     "image": "http://localhost:3000/images/anh49.png",
     "variant": [
@@ -506,11 +554,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước ép táo xanh được làm từ những trái táo xanh tươi ngon, được tuyển chọn kỹ càng, mang đến hương vị thanh mát, ngọt dịu tự nhiên. Nước ép táo xanh chứa nhiều vitamin và khoáng chất, tốt cho sức khỏe, giúp tăng cường hệ miễn dịch, hỗ trợ tiêu hóa, thanh lọc cơ thể. Hãy thưởng thức nước ép táo xanh mỗi ngày để bổ sung năng lượng và giữ gìn sức khỏe! - Nước ép táo xanh nguyên chất 100%, Không chứa đường, chất bảo quản"
   },
   {
     "id": 50,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép cà chua",
     "image": "http://localhost:3000/images/anh50.png",
     "variant": [
@@ -527,11 +576,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước ép cà chua là sự kết hợp hoàn hảo giữa vị chua thanh mát của chanh, vị ngọt dịu của cà chua và hương thơm nồng nàn của húng quế, tạo nên một thức uống đầy hấp dẫn và sảng khoái. Nước ép cà chua được lựa chọn kỹ càng, đảm bảo độ tươi ngon và vị ngọt tự nhiên. Hãy thưởng thức Bloody Mary vào buổi sáng để bắt đầu một ngày mới tràn đầy năng lượng! - Nước ép cà chua tươi ngon, vỏ chanh tươi, cây húng quế, cà chua bi"
   },
   {
     "id": 51,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép dứa",
     "image": "http://localhost:3000/images/51.png",
     "variant": [
@@ -548,11 +598,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước ép dứa được làm từ những trái dứa chín mọng, tuyển chọn kỹ càng, mang đến hương vị thơm ngon, ngọt thanh mát, sảng khoái. Nước ép dứa chứa nhiều vitamin C, bromelain, giúp tăng cường hệ miễn dịch, hỗ trợ tiêu hóa, đẹp da. Hãy thưởng thức nước ép dứa mỗi ngày để bổ sung năng lượng và giữ gìn sức khỏe! - Nước ép dứa nguyên chất 100%, không chứa đường, chất bảo quản"
   },
   {
     "id": 52,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép cà chua",
     "image": "http://localhost:3000/images/anh52.png",
     "variant": [
@@ -569,11 +620,12 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước ép cà chua được làm từ những trái cà chua chín mọng, tuyển chọn kỹ càng, mang đến hương vị thơm ngon, chua ngọt tự nhiên. Nước ép cà chua chứa nhiều vitamin C, lycopene, giúp tăng cường hệ miễn dịch, hỗ trợ tiêu hóa, đẹp da. Hãy thưởng thức nước ép cà chua mỗi ngày để bổ sung năng lượng và giữ gìn sức khỏe! - Nước ép cà chua nguyên chất 100%, không chứa đường, chất bảo quản"
   },
   {
     "id": 53,
-    "category": "Đồ uống",
+    "category": "672851b8d8d0335ef8fc045c",
     "name": "Nước ép dưa hấu",
     "image": "http://localhost:3000/images/anh53.png",
     "variant": [
@@ -590,6 +642,7 @@
         "price": 45000
       }
     ],
+    "quantity": 100,
     "description": "Nước ép dưa hấu được làm từ những trái dưa hấu chín mọng, tuyển chọn kỹ càng, mang đến hương vị thơm ngon, ngọt mát, sảng khoái. Nước ép dưa hấu chứa nhiều vitamin C, lycopene, giúp tăng cường hệ miễn dịch, hỗ trợ tiêu hóa, đẹp da. Hãy thưởng thức nước ép dưa hấu mỗi ngày để bổ sung năng lượng và giữ gìn sức khỏe! - Nước ép dưa hấu nguyên chất 100% , không chứa đường, chất bảo quản"
   }
 ]

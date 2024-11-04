@@ -3,7 +3,7 @@ require('./Category')
 
 const MenuSchema = new mongoose.Schema({
     category: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
         required: true,
     },
@@ -23,6 +23,10 @@ const MenuSchema = new mongoose.Schema({
     },
     img: {
         type: String,
+        trim: true,
+    },
+    quantity: {
+        type: Number,
         trim: true,
     },
 
