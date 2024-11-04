@@ -47,7 +47,7 @@ exports.register = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullname, email, password, phone_number, address } = req.body;
+    const { fullname, email, password, phone, address } = req.body;
 
     try {
         let user = await User.findOne({ email });
@@ -57,7 +57,7 @@ exports.register = async (req, res) => {
             fullname,
             email,
             password,
-            phone_number,
+            phone,
             address,
         });
 

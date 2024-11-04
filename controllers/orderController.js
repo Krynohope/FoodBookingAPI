@@ -18,8 +18,10 @@ exports.createOrder = async (req, res) => {
         }
 
         const total = parseFloat(menu.price) * quantity;
+        const orderNumber = Date.now().toString(); // Simple order ID generation
 
         const order = new Order({
+            order_id: orderNumber,
             user_id: req.user.id,
             status: 'pending',
             total,
@@ -45,10 +47,27 @@ exports.createOrder = async (req, res) => {
 // Get user's orders
 exports.getUserOrders = async (req, res) => {
     try {
-        const orders = await Order.find({ user_id: req.user.id })
+        const { status, payment_method, page = 1, limit = 10 } = req.query;
+        const skipIndex = (parseInt(page) - 1) * parseInt(limit);
+
+        let query = { user_id: req.user.id };
+        if (status) query.status = status;
+        if (payment_method) query.payment_method = payment_method;
+
+        const orders = await Order.find(query)
             .populate('orderDetail.menu_id')
-            .sort({ createdAt: -1 });
-        res.json(orders);
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit))
+            .skip(skipIndex);
+
+        const total = await Order.countDocuments(query);
+
+        res.json({
+            orders,
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit)),
+            totalOrders: total
+        });
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
@@ -58,8 +77,9 @@ exports.getUserOrders = async (req, res) => {
 // Get order by ID
 exports.getOrderById = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id)
-            .populate('orderDetail.menu_id');
+        const order = await Order.findOne({ order_id: req.params.id })
+            .populate('orderDetail.menu_id')
+            .populate('user_id', 'full_name email');
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
@@ -87,14 +107,21 @@ exports.getAllOrders = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skipIndex = (page - 1) * limit;
 
-        const orders = await Order.find()
+        // Build query based on filters
+        const { status, payment_method } = req.query;
+        let query = {};
+
+        if (status) query.status = status;
+        if (payment_method) query.payment_method = payment_method;
+
+        const orders = await Order.find(query)
             .populate('user_id', 'full_name email')
             .populate('orderDetail.menu_id')
             .sort({ createdAt: -1 })
             .limit(limit)
             .skip(skipIndex);
 
-        const total = await Order.countDocuments();
+        const total = await Order.countDocuments(query);
 
         res.json({
             orders,
@@ -116,7 +143,7 @@ exports.updateOrderStatus = async (req, res) => {
         }
 
         const { status, payment_status } = req.body;
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne({ order_id: req.params.id });
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
@@ -134,10 +161,10 @@ exports.updateOrderStatus = async (req, res) => {
     }
 };
 
-// Cancel order (User)
+// Cancel order (within 5 minutes)
 exports.cancelOrder = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne({ order_id: req.params.id });
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
@@ -147,10 +174,18 @@ exports.cancelOrder = async (req, res) => {
             return res.status(403).json({ message: 'Access forbidden: Not your order' });
         }
 
-        // Only allow cancellation if order is in pending status
+        // Check if order status is pending
         if (order.status !== 'pending') {
             return res.status(400).json({
                 message: 'Order cannot be cancelled. Only pending orders can be cancelled.'
+            });
+        }
+
+        // Check if within 5 minutes
+        const timeDifference = (Date.now() - order.createdAt.getTime()) / (1000 * 60);
+        if (timeDifference > 5) {
+            return res.status(400).json({
+                message: 'Order cannot be cancelled. The 5-minute cancellation window has expired.'
             });
         }
 
@@ -171,7 +206,20 @@ exports.getOrderStats = async (req, res) => {
             return res.status(403).json({ message: 'Access forbidden: Admin only' });
         }
 
+        const { startDate, endDate } = req.query;
+        let dateQuery = {};
+
+        if (startDate && endDate) {
+            dateQuery.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
         const stats = await Order.aggregate([
+            {
+                $match: dateQuery
+            },
             {
                 $group: {
                     _id: null,
@@ -179,19 +227,19 @@ exports.getOrderStats = async (req, res) => {
                     totalRevenue: { $sum: '$total' },
                     averageOrderValue: { $avg: '$total' },
                     pendingOrders: {
-                        $sum: {
-                            $cond: [{ $eq: ['$status', 'pending'] }, 1, 0]
-                        }
+                        $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] }
                     },
                     completedOrders: {
-                        $sum: {
-                            $cond: [{ $eq: ['$status', 'completed'] }, 1, 0]
-                        }
+                        $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
                     },
                     cancelledOrders: {
-                        $sum: {
-                            $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0]
-                        }
+                        $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] }
+                    },
+                    zalopayOrders: {
+                        $sum: { $cond: [{ $eq: ['$payment_method', 'Zalopay'] }, 1, 0] }
+                    },
+                    codOrders: {
+                        $sum: { $cond: [{ $eq: ['$payment_method', 'Thanh toán khi nhận hàng'] }, 1, 0] }
                     }
                 }
             }
@@ -203,7 +251,9 @@ exports.getOrderStats = async (req, res) => {
             averageOrderValue: 0,
             pendingOrders: 0,
             completedOrders: 0,
-            cancelledOrders: 0
+            cancelledOrders: 0,
+            zalopayOrders: 0,
+            codOrders: 0
         });
     } catch (error) {
         console.error(error.message);

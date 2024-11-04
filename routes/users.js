@@ -16,7 +16,7 @@ router.put('/profile',
         check('full_name', 'Full name is required').optional().not().isEmpty(),
         check('email', 'Please include a valid email').optional().isEmail(),
         check('password', 'Password must be at least 6 characters').optional().isLength({ min: 6 }),
-        check('phone_number').optional(),
+        check('phone').optional(),
         check('address').optional()
     ],
     updateProfile

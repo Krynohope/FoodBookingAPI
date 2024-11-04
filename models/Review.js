@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+require('./User')
+require('./Order')
 
 const ReviewSchema = new mongoose.Schema({
 

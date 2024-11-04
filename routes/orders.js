@@ -15,23 +15,17 @@ router.post('/', [
     ]
 ], orderController.createOrder);
 
+// Get user orders with pagination and filters
 router.get('/', authMiddleware(), orderController.getUserOrders);
 
+// Get order by ID
 router.get('/:id', authMiddleware(), orderController.getOrderById);
 
+// Cancel order (trong 5 phút)
 router.post('/:id/cancel', authMiddleware(), orderController.cancelOrder);
 
-// Admin Routes
-router.get('/admin/all', [authMiddleware('admin')], orderController.getAllOrders);
 
-router.patch('/admin/:id/status', [
-    authMiddleware('admin'),
-    [
-        check('status').optional().isIn(['pending', 'processing', 'completed', 'cancelled']),
-        check('payment_status').optional().isIn(['pending', 'paid', 'failed', 'refunded'])
-    ]
-], orderController.updateOrderStatus);
 
-router.get('/admin/stats', [authMiddleware('admin')], orderController.getOrderStats);
+
 
 module.exports = router;

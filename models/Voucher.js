@@ -16,7 +16,6 @@ const VoucherSchema = new mongoose.Schema({
     },
     code: {
         type: String,
-        required: true,
         unique: true,
         trim: true,
     },
@@ -32,6 +31,10 @@ const VoucherSchema = new mongoose.Schema({
     min_order: {
         type: Number,
         required: true,
+    },
+    img: {
+        type: String,
+        trim: true,
     },
 
 }, { timestamps: true });

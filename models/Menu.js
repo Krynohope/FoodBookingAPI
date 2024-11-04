@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
+require('./Category')
 
 const MenuSchema = new mongoose.Schema({
     category: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: 'Category',
         required: true,
     },
@@ -17,30 +18,31 @@ const MenuSchema = new mongoose.Schema({
     },
     price: {
         type: Number,
-        required: true,
         min: 0,
+        trim: true,
     },
-    image: {
+    img: {
         type: String,
         trim: true,
     },
 
-    variant: {
+    variant: [{
         type: {
             size: {
                 type: String,
-                required: true,
                 trim: true,
             },
             price: {
                 type: Number,
-                required: true,
+                trim: true,
             },
         },
         required: false
-    }
+    }]
 
 
 }, { timestamps: true });
+
+
 
 module.exports = mongoose.model('Menu', MenuSchema);

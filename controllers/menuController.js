@@ -34,6 +34,21 @@ exports.getMenuItems = async (req, res) => {
             filter.name = { $regex: req.query.name, $options: 'i' };
         }
 
+        // Add  filter by price sort
+        let sortOption = {};
+        if (req.query.sort) {
+            switch (req.query.sort.toLowerCase()) {
+                case 'price_asc':
+                    sortOption = { price: 1 };
+                    break;
+                case 'price_desc':
+                    sortOption = { price: -1 };
+                    break;
+                default:
+                    sortOption = {};
+            }
+        }
+
         // Add price range filter 
         if (req.query.minPrice || req.query.maxPrice) {
             filter.price = {};
