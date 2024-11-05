@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const { check } = require('express-validator');
-const { getProfile, updateProfile } = require('../controllers/userController');
+const { getProfile, updateProfile, removeAddress } = require('../controllers/userController');
 const { upload, handleMulterError } = require('../middlewares/uploadFile');
 
 router.use(authMiddleware());
@@ -21,7 +21,7 @@ router.patch('/profile',
     ],
     updateProfile
 );
-
+router.delete('/address', removeAddress);
 
 
 module.exports = router;

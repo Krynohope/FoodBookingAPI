@@ -6,7 +6,10 @@ const userController = require('../controllers/userController');
 const menuController = require('../controllers/menuController');
 const categoryController = require('../controllers/categoryController');
 const orderController = require('../controllers/orderController');
+const voucherController = require('../controllers/voucherController');
+const reviewController = require('../controllers/reviewController');
 const { upload, handleMulterError } = require('../middlewares/uploadFile');
+const { body } = require('express-validator');
 
 router.use(authMiddleware('admin'));
 
@@ -18,18 +21,18 @@ router.get('/users', [
 ], userController.getAllUsers);
 
 router.post('/users', [
-    check('full_name', 'Full name is required').not().isEmpty(),
+    check('fullname', 'Full name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
-    check('role').optional().isIn(['customer', 'admin']),
-    check('phone_number').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
+    check('role').optional().isIn(['user', 'admin']),
+    check('phone').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
 ], userController.createUser);
 
-router.put('/users/:id', [
-    check('full_name').optional().not().isEmpty(),
+router.patch('/users/:id', [
+    check('fullname').optional().not().isEmpty(),
     check('email').optional().isEmail(),
-    check('role').optional().isIn(['customer', 'admin']),
-    check('phone_number').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
+    check('role').optional().isIn(['user', 'admin']),
+    check('phone').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
 ], userController.updateUser);
 
 router.delete('/users/:id', userController.deleteUser);
@@ -95,6 +98,37 @@ router.patch('/orders/:id/status', [
     ]
 ], orderController.updateOrderStatus);
 
+//Vouchers management
+const voucherValidation = [
+    body('name').notEmpty().trim().withMessage('Name is required'),
+    body('code').notEmpty().trim().withMessage('Code is required'),
+    body('discount_percent').isFloat({ min: 0, max: 100 }).withMessage('Discount percent must be between 0 and 100'),
+    body('start').isISO8601().withMessage('Start date must be valid'),
+    body('end').isISO8601().withMessage('End date must be valid'),
+    body('limit').isInt({ min: 0 }).withMessage('Limit must be a positive number'),
+    body('min_price').isFloat({ min: 0 }).withMessage('Minimum order must be a positive number')
+];
+
+router.post('/vouchers',
+    upload.single('img'),
+    voucherValidation,
+    voucherController.createVoucher
+);
+
+router.patch('/vouchers/:id',
+    upload.single('img'),
+    voucherController.updateVoucher
+);
+
+router.delete('/vouchers/:id',
+    voucherController.deleteVoucher
+);
+
+//Review
+router.delete('/reviews/:id',
+    reviewController.deleteReview
+);
+
 // Dashboard Statistics
 router.get('/stats/orders', orderController.getOrderStats);
 
@@ -117,18 +151,6 @@ router.get('/stats/overview', async (req, res) => {
     }
 });
 
-// Error handling for file uploads
-router.use((error, req, res, next) => {
-    if (error instanceof multer.MulterError) {
-        if (error.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ message: 'File is too large. Maximum size is 5MB' });
-        }
-        return res.status(400).json({ message: error.message });
-    }
-    if (error) {
-        return res.status(400).json({ message: error.message });
-    }
-    next();
-});
+
 
 module.exports = router;

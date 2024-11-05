@@ -1,6 +1,8 @@
 const { validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const Menu = require('../models/Menu');
+const Voucher = require('../models/Voucher');
+
 
 // Create new order
 exports.createOrder = async (req, res) => {
@@ -9,40 +11,111 @@ exports.createOrder = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { menu_id, quantity, shipping_address, payment_method } = req.body;
+    const { orderItems, shipping_address, payment_method, code } = req.body;
 
     try {
-        const menu = await Menu.findById(menu_id);
-        if (!menu) {
-            return res.status(404).json({ message: 'Menu item not found' });
+        // Validate order items
+        if (!Array.isArray(orderItems) || orderItems.length === 0) {
+            return res.status(400).json({ message: 'Order items must be a non-empty array' });
         }
 
-        const total = parseFloat(menu.price) * quantity;
+        // Process all menu items and calculate initial total
+        const processedItems = [];
+        let subtotal = 0;
+
+        for (const item of orderItems) {
+            const menu = await Menu.findById(item.menu_id);
+            if (!menu) {
+                return res.status(404).json({
+                    message: `Menu item not found with ID: ${item.menu_id}`
+                });
+            }
+
+            processedItems.push({
+                menu_id: menu._id,
+                quantity: item.quantity,
+                price: menu.price
+            });
+
+            subtotal += parseFloat(menu.price) * item.quantity;
+        }
+
+        // Process voucher if provided
+        let total = subtotal;
+        let voucher = null;
+        let discountAmount = 0;
+
+        if (code) {
+            voucher = await Voucher.findOne({
+                code,
+                start: { $lte: new Date() },
+                end: { $gte: new Date() }
+            });
+
+            if (!voucher) {
+                return res.status(400).json({ message: 'Invalid or expired voucher code' });
+            }
+
+            // Check minimum order amount
+            if (subtotal < voucher.min_price) {
+                return res.status(400).json({
+                    message: `Order total must be at least ${voucher.min_price} to use this voucher`
+                });
+            }
+
+            // Check if voucher limit is reached
+            const voucherUsageCount = await Order.countDocuments({
+                voucher_id: voucher._id,
+                status: { $ne: 'cancelled' }
+            });
+
+            if (voucherUsageCount >= voucher.limit) {
+                return res.status(400).json({ message: 'Voucher usage limit reached' });
+            }
+
+            // Apply discount
+            discountAmount = (subtotal * voucher.discount_percent) / 100;
+            total = subtotal - discountAmount;
+        }
+
         const orderNumber = Date.now().toString(); // Simple order ID generation
 
         const order = new Order({
             order_id: orderNumber,
             user_id: req.user.id,
+            voucher_id: voucher ? voucher._id : null,
             status: 'pending',
             total,
             payment_method,
             payment_status: 'pending',
             shipping_address,
-            orderDetail: {
-                menu_id,
-                quantity,
-                price: menu.price
-            }
+            orderDetail: processedItems
         });
 
         await order.save();
 
-        res.status(201).json({ message: 'Order placed successfully', order });
+        // Populate menu details for response
+        await order.populate('orderDetail.menu_id');
+
+        res.status(201).json({
+            message: 'Order placed successfully',
+            order,
+            orderSummary: {
+                subtotal,
+                discount: voucher ? {
+                    name: voucher.name,
+                    discountPercent: voucher.discount_percent,
+                    discountAmount
+                } : null,
+                total
+            }
+        });
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
     }
 };
+
 
 // Get user's orders
 exports.getUserOrders = async (req, res) => {

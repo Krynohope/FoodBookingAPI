@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middlewares/authMiddleware');
 const menuController = require('../controllers/menuController');
-const { check, query } = require('express-validator');
+const { query } = require('express-validator');
 
 
 
@@ -28,10 +27,7 @@ router.get('/', [
 ], menuController.getMenuItems);
 
 
-//Lấy chi tiết món
 router.get('/:id', menuController.getMenuItemById);
-
-
 
 
 
