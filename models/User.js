@@ -26,12 +26,12 @@ const UserSchema = new mongoose.Schema({
         match: [/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Please fill a valid phone number']
     },
     avatar: {
-        default: `${process.env.DOMAIN}/public/images/default.jpg`,
+        default: `${process.env.DOMAIN}/images/default.jpg`,
         type: String,
         trim: true
     },
     address: [{
-        default: [],
+        default: undefined,
         type: String,
         trim: true
     }],

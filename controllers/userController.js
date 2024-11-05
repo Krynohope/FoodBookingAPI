@@ -1,6 +1,9 @@
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
-const bcrypt = require('bcrypt');
+const { removeUploadedFile } = require('../middlewares/uploadFile');
+const path = require('path');
+const fs = require('fs');
+
 
 //Get  user by ID
 exports.getUserById = async (req, res) => {
@@ -43,14 +46,15 @@ exports.updateProfile = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullname, email, password, phone_number, address } = req.body;
+    const { fullname, phone, address } = req.body;
 
     const userFields = {};
     if (fullname) userFields.fullname = fullname;
-    if (email) userFields.email = email;
     if (phone) userFields.phone = phone;
-    if (address) userFields.address = address;
-    if (password) userFields.password = password;
+    if (address) {
+        // Add new address to the array if it doesn't exist
+        userFields.$addToSet = { address: address };
+    }
 
     // Handle avatar upload
     if (req.file) {
@@ -66,17 +70,6 @@ exports.updateProfile = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        if (email && email !== user.email) {
-            const emailExists = await User.findOne({ email });
-            if (emailExists) {
-                if (req.file) {
-                    removeUploadedFile(req.file.path);
-                }
-                return res.status(400).json({ message: 'Email already in use' });
-            }
-        }
-
-
         if (req.file && user.avatar) {
             const oldPath = path.join('public', user.avatar.replace(process.env.DOMAIN, ''));
             if (fs.existsSync(oldPath)) {
@@ -86,7 +79,7 @@ exports.updateProfile = async (req, res) => {
 
         user = await User.findByIdAndUpdate(
             req.user.id,
-            { $set: userFields },
+            userFields,
             { new: true }
         ).select('-password');
 
@@ -104,7 +97,31 @@ exports.updateProfile = async (req, res) => {
     }
 };
 
+// Remove address
+exports.removeAddress = async (req, res) => {
+    const { address } = req.body;
 
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $pull: { address: address } },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Address removed successfully',
+            data: user
+        });
+    } catch (error) {
+        console.error('Error in removeAddress:', error.message);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
 
 
 
@@ -145,7 +162,7 @@ exports.createUser = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullname, email, password, phone, address } = req.body;
+    const { fullname, email, password, phone } = req.body;
 
     try {
         let user = await User.findOne({ email });
@@ -158,7 +175,6 @@ exports.createUser = async (req, res) => {
             email,
             password,
             phone,
-            address: [address]
         });
 
 
@@ -173,6 +189,8 @@ exports.createUser = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+
 // Admin update user
 exports.updateUser = async (req, res) => {
     const errors = validationResult(req);
@@ -181,15 +199,23 @@ exports.updateUser = async (req, res) => {
     }
 
     try {
+
+        const userToUpdate = await User.findById(req.params.id);
+
+        if (!userToUpdate) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if trying to update another admin account
+        if (userToUpdate.role === 'admin' && req.user._id.toString() !== userToUpdate._id.toString()) {
+            return res.status(403).json({ message: 'Cannot modify other admin accounts' });
+        }
+
         const user = await User.findByIdAndUpdate(
             req.params.id,
             { $set: req.body },
             { new: true }
         ).select('-password');
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
 
         res.json(user);
     } catch (error) {
@@ -204,9 +230,15 @@ exports.updateUser = async (req, res) => {
 // Delete user
 exports.deleteUser = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
+        const userToDelete = await User.findById(req.params.id);
+
+        if (!userToDelete) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if trying to delete another admin account
+        if (userToDelete.role === 'admin' && req.user._id.toString() !== userToDelete._id.toString()) {
+            return res.status(403).json({ message: 'Cannot delete other admin accounts' });
         }
 
         await User.findByIdAndDelete(req.params.id);

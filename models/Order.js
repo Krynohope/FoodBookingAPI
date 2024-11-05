@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 require('./User')
 require('./Menu')
+require('./Voucher')
 
 const OrderSchema = new mongoose.Schema({
     order_id: {
@@ -13,11 +14,18 @@ const OrderSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    voucher_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Voucher',
+        required: false,
+        default: null
+    },
     status: {
         type: String,
         required: true,
         trim: true,
     },
+
     total: {
         type: Number,
         required: true,
@@ -40,7 +48,8 @@ const OrderSchema = new mongoose.Schema({
         trim: true,
     },
 
-    orderDetail: {
+    orderDetail: [{
+
         menu_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Menu',
@@ -54,7 +63,7 @@ const OrderSchema = new mongoose.Schema({
             type: Number,
             required: true,
         },
-    },
+    }]
 
 }, { timestamps: true });
 

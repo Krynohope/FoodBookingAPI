@@ -28,7 +28,7 @@ const VoucherSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    min_order: {
+    min_price: {
         type: Number,
         required: true,
     },
