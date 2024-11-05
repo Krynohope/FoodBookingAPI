@@ -21,13 +21,13 @@ exports.getMenuItems = async (req, res) => {
         const filter = {};
 
         // Add category filter
-        if (req.query.category_id) {
+        if (req.query.category) {
 
-            const category = await Category.findById(req.query.category_id);
+            const category = await Category.findById(req.query.category);
             if (!category) {
                 return res.status(404).json({ message: 'Category not found' });
             }
-            filter.category = req.query.category_id;
+            filter.category = req.query.category;
         }
 
         // Add  filter by name
@@ -75,7 +75,7 @@ exports.getMenuItems = async (req, res) => {
             limit,
 
             filters: {
-                category: req.query.category_id,
+                category: req.query.category,
                 minPrice: req.query.minPrice,
                 maxPrice: req.query.maxPrice,
                 sort: req.query.sort
