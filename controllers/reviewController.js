@@ -16,8 +16,8 @@ exports.getReviews = async (req, res) => {
 
         const total = await Review.countDocuments(query);
         const reviews = await Review.find(query)
-            .populate('user_id', 'name email') // Assuming user has these fields
-            .populate('order_id', 'order_number') // Assuming order has this field
+            .populate('user_id', 'name email')
+            .populate('order_id', 'status')
             .select('-__v')
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
@@ -81,13 +81,13 @@ exports.createReview = async (req, res) => {
         }
 
         const { order_id, rating, comment } = req.body;
-        const user_id = req.user.id; // Assuming user ID is available from auth middleware
+        const user_id = req.user.id;
 
         // Check if order exists and belongs to the user
         const order = await Order.findOne({
             _id: order_id,
             user_id: user_id,
-            status: 'success' // Assuming you only want reviews for delivered orders
+            status: 'success'
         });
 
         if (!order) {
@@ -117,7 +117,7 @@ exports.createReview = async (req, res) => {
 
         const populatedReview = await Review.findById(review._id)
             .populate('user_id', 'name email')
-            .populate('order_id', 'order_number');
+            .populate('order_id', 'status');
 
         res.status(201).json({
             success: true,

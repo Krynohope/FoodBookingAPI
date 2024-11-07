@@ -35,26 +35,27 @@ exports.getMenuItems = async (req, res) => {
             filter.name = { $regex: req.query.name, $options: 'i' };
         }
 
-        // Add  filter by price sort
+        // Add price range filter 
+        if (req.query.minPrice || req.query.maxPrice) {
+            filter.$or = [
+                { price: { $exists: true, $gte: parseFloat(req.query.minPrice || 0), $lte: parseFloat(req.query.maxPrice || Infinity) } },
+                { 'variant.price': { $exists: true, $gte: parseFloat(req.query.minPrice || 0), $lte: parseFloat(req.query.maxPrice || Infinity) } }
+            ];
+        }
+
+        // Add sort option
         let sortOption = {};
         if (req.query.sort) {
             switch (req.query.sort.toLowerCase()) {
                 case 'price_asc':
-                    sortOption = { price: 1 };
+                    sortOption = { 'variant.price': 1, price: 1 };
                     break;
                 case 'price_desc':
-                    sortOption = { price: -1 };
+                    sortOption = { 'variant.price': -1, price: -1 };
                     break;
                 default:
                     sortOption = {};
             }
-        }
-
-        // Add price range filter 
-        if (req.query.minPrice || req.query.maxPrice) {
-            filter.price = {};
-            if (req.query.minPrice) filter.price.$gte = parseFloat(req.query.minPrice);
-            if (req.query.maxPrice) filter.price.$lte = parseFloat(req.query.maxPrice);
         }
 
         const menuItems = await Menu.find(filter)
