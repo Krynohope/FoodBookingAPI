@@ -2,6 +2,8 @@ const { validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const Menu = require('../models/Menu');
 const Voucher = require('../models/Voucher');
+const User = require('../models/User');
+
 
 
 // Create new order
@@ -38,6 +40,15 @@ exports.createOrder = async (req, res) => {
             });
 
             subtotal += parseFloat(menu.price) * item.quantity;
+        }
+
+        let shippingCost = 30000; // Default shipping cost
+        const totalItems = processedItems.reduce((sum, item) => sum + item.quantity, 0);
+
+        if (totalItems > 6) {
+            shippingCost = 0;
+        } else if (totalItems > 3) {
+            shippingCost = 15000;
         }
 
         // Process voucher if provided
@@ -78,7 +89,15 @@ exports.createOrder = async (req, res) => {
             total = subtotal - discountAmount;
         }
 
-        const orderNumber = Date.now().toString(); // Simple order ID generation
+        total += shippingCost;
+
+        // Generate order ID using first character of email and date
+        const user = await User.findById(request.user.id)
+        const emailFirstChar = user.email.charAt(0).toUpperCase();
+        const currentDate = new Date();
+        const formattedDate = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}${String(currentDate.getDate()).padStart(2, '0')}`;
+        const timeStamp = `${String(currentDate.getHours()).padStart(2, '0')}${String(currentDate.getMinutes()).padStart(2, '0')}${String(currentDate.getSeconds()).padStart(2, '0')}`;
+        const orderNumber = `${emailFirstChar}${formattedDate}${timeStamp}`;
 
         const order = new Order({
             order_id: orderNumber,
@@ -89,12 +108,11 @@ exports.createOrder = async (req, res) => {
             payment_method,
             payment_status: 'pending',
             shipping_address,
+            ship: shippingCost,
             orderDetail: processedItems
         });
 
         await order.save();
-
-        // Populate menu details for response
         await order.populate('orderDetail.menu_id');
 
         res.status(201).json({
@@ -102,6 +120,7 @@ exports.createOrder = async (req, res) => {
             order,
             orderSummary: {
                 subtotal,
+                shippingCost,
                 discount: voucher ? {
                     name: voucher.name,
                     discountPercent: voucher.discount_percent,
@@ -126,6 +145,7 @@ exports.getUserOrders = async (req, res) => {
         let query = { user_id: req.user.id };
         if (status) query.status = status;
         if (payment_method) query.payment_method = payment_method;
+        if (payment_status) query.payment_status = payment_status;
 
         const orders = await Order.find(query)
             .populate('orderDetail.menu_id')
@@ -152,17 +172,21 @@ exports.getOrderById = async (req, res) => {
     try {
         const order = await Order.findOne({ order_id: req.params.id })
             .populate('orderDetail.menu_id')
-            .populate('user_id', 'full_name email');
+            .populate('user_id', 'full_name email')
+            .populate('voucher_id');
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        if (order.user_id.toString() !== req.user.id && req.user.role !== 'admin') {
+        if (order.user_id._id.toString() !== req.user.id && req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Access forbidden: Not your order' });
         }
 
-        res.json(order);
+        res.json({
+            ...order.toObject(),
+            payment_status: order.payment_status
+        });
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
@@ -275,9 +299,6 @@ exports.cancelOrder = async (req, res) => {
 // Get order statistics (Admin only)
 exports.getOrderStats = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Access forbidden: Admin only' });
-        }
 
         const { startDate, endDate } = req.query;
         let dateQuery = {};

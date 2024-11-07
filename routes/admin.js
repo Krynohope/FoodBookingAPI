@@ -24,14 +24,12 @@ router.post('/users', [
     check('fullname', 'Full name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
-    check('role').optional().isIn(['user', 'admin']),
     check('phone').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
 ], userController.createUser);
 
 router.patch('/users/:id', [
     check('fullname').optional().not().isEmpty(),
     check('email').optional().isEmail(),
-    check('role').optional().isIn(['user', 'admin']),
     check('phone').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
 ], userController.updateUser);
 
@@ -94,9 +92,11 @@ router.patch('/orders/:id/status', [
     authMiddleware('admin'),
     [
         check('status').optional().isIn(['pending', 'processing', 'completed', 'cancelled']),
-        check('payment_status').optional().isIn(['pending', 'paid', 'failed', 'refunded'])
+        check('payment_status').optional().isIn(['pending', 'paid', 'failed'])
     ]
 ], orderController.updateOrderStatus);
+
+
 
 //Vouchers management
 const voucherValidation = [
@@ -128,6 +128,8 @@ router.delete('/vouchers/:id',
 router.delete('/reviews/:id',
     reviewController.deleteReview
 );
+
+
 
 // Dashboard Statistics
 router.get('/stats/orders', orderController.getOrderStats);
