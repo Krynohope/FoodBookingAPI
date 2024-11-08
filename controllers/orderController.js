@@ -195,7 +195,7 @@ exports.createOrder = async (req, res) => {
 // Get user's orders
 exports.getUserOrders = async (req, res) => {
     try {
-        const { status, payment_method, page = 1, limit = 10 } = req.query;
+        const { status, payment_method, payment_status, page = 1, limit = 10 } = req.query;
         const skipIndex = (parseInt(page) - 1) * parseInt(limit);
 
         let query = { user_id: req.user.id };
@@ -324,7 +324,7 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 // Cancel order (within 5 minutes)
-exports.cancelOrder = async (req, res) => {
+exports.cancleOrder = async (req, res) => {
     try {
         const order = await Order.findOne({ order_id: req.params.id });
 
@@ -352,6 +352,7 @@ exports.cancelOrder = async (req, res) => {
         }
 
         order.status = 'cancelled';
+        order.payment_method = 'failed';
         await order.save();
 
         res.json({ message: 'Order cancelled successfully', order });

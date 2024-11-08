@@ -14,7 +14,7 @@ router.get('/', authMiddleware(), orderController.getUserOrders);
 router.get('/:id', authMiddleware(), orderController.getOrderById);
 
 // Cancel order (trong 5 phút)
-router.post('/:id/cancel', authMiddleware(), orderController.cancelOrder);
+router.post('/:id/cancle', authMiddleware(), orderController.cancleOrder);
 
 
 
