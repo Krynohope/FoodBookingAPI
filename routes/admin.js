@@ -106,7 +106,7 @@ const voucherValidation = [
     body('start').isISO8601().withMessage('Start date must be valid'),
     body('end').isISO8601().withMessage('End date must be valid'),
     body('limit').isInt({ min: 0 }).withMessage('Limit must be a positive number'),
-    body('min_price').isFloat({ min: 0 }).withMessage('Minimum order must be a positive number')
+    body('min_price')
 ];
 
 router.post('/vouchers',
