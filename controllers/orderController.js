@@ -3,6 +3,9 @@ const Order = require('../models/Order');
 const Menu = require('../models/Menu');
 const Voucher = require('../models/Voucher');
 const User = require('../models/User');
+const dotenv = require('dotenv');
+const { log } = require('debug/src/browser');
+dotenv.config();
 
 
 
@@ -17,7 +20,7 @@ exports.createOrder = async (req, res) => {
 
     try {
         // Validate order items
-        if (!Array.isArray(orderItems) || orderItems.length === 0) {
+        if (!Array.isArray(orderItems) || orderItems.length == 0) {
             return res.status(400).json({ message: 'Order items must be a non-empty array' });
         }
 
@@ -26,6 +29,12 @@ exports.createOrder = async (req, res) => {
         let subtotal = 0;
 
         for (const item of orderItems) {
+            if (!item.menu_id || !item.quantity || item.quantity < 1) {
+                return res.status(400).json({
+                    message: 'Each order item must have a menu_id and valid quantity'
+                });
+            }
+
             const menu = await Menu.findById(item.menu_id);
             if (!menu) {
                 return res.status(404).json({
@@ -33,15 +42,44 @@ exports.createOrder = async (req, res) => {
                 });
             }
 
+            // Handle items with variants
+            let itemPrice;
+            if (item.variant_size && menu.variant && menu.variant.length > 0) {
+                const selectedVariant = menu.variant.find(v => v.size == item.variant_size);
+                if (!selectedVariant) {
+                    return res.status(400).json({
+                        message: `Invalid variant size "${item.variant_size}" for menu item: ${menu.name}`
+                    });
+                }
+                itemPrice = selectedVariant.price;
+            } else {
+                // Regular menu item without variant
+                if (!menu.price) {
+                    return res.status(400).json({
+                        message: `Price not set for menu item: ${menu.name}`
+                    });
+                }
+                itemPrice = menu.price;
+            }
+
+            // Check if quantity is available
+            if (menu.quantity !== undefined && menu.quantity < item.quantity) {
+                return res.status(400).json({
+                    message: `Insufficient quantity available for ${menu.name}. Available: ${menu.quantity}`
+                });
+            }
+
             processedItems.push({
                 menu_id: menu._id,
                 quantity: item.quantity,
-                price: menu.price
+                price: itemPrice,
+                variant_size: item.variant_size || null
             });
 
-            subtotal += parseFloat(menu.price) * item.quantity;
+            subtotal += itemPrice * item.quantity;
         }
 
+        // Calculate shipping cost
         let shippingCost = 30000; // Default shipping cost
         const totalItems = processedItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -67,14 +105,12 @@ exports.createOrder = async (req, res) => {
                 return res.status(400).json({ message: 'Invalid or expired voucher code' });
             }
 
-            // Check minimum order amount
             if (subtotal < voucher.min_price) {
                 return res.status(400).json({
                     message: `Order total must be at least ${voucher.min_price} to use this voucher`
                 });
             }
 
-            // Check if voucher limit is reached
             const voucherUsageCount = await Order.countDocuments({
                 voucher_id: voucher._id,
                 status: { $ne: 'cancelled' }
@@ -84,15 +120,18 @@ exports.createOrder = async (req, res) => {
                 return res.status(400).json({ message: 'Voucher usage limit reached' });
             }
 
-            // Apply discount
-            discountAmount = (subtotal * voucher.discount_percent) / 100;
+            discountAmount = Math.min((subtotal * voucher.discount_percent) / 100, voucher.max_discount || Infinity);
             total = subtotal - discountAmount;
         }
 
         total += shippingCost;
 
-        // Generate order ID using first character of email and date
-        const user = await User.findById(request.user.id)
+        // Generate order ID
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
         const emailFirstChar = user.email.charAt(0).toUpperCase();
         const currentDate = new Date();
         const formattedDate = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}${String(currentDate.getDate()).padStart(2, '0')}`;
@@ -112,10 +151,19 @@ exports.createOrder = async (req, res) => {
             orderDetail: processedItems
         });
 
+        // Update menu item quantities
+        for (const item of processedItems) {
+            const menu = await Menu.findById(item.menu_id);
+            if (menu.quantity != undefined) {
+                menu.quantity -= item.quantity;
+                await menu.save();
+            }
+        }
+
         await order.save();
         await order.populate('orderDetail.menu_id');
 
-        res.status(201).json({
+        const response = {
             message: 'Order placed successfully',
             order,
             orderSummary: {
@@ -128,10 +176,18 @@ exports.createOrder = async (req, res) => {
                 } : null,
                 total
             }
-        });
+        };
+
+        if (payment_method == 'zalopay') {
+            //
+
+        }
+
+        return res.status(201).json(response);
+
     } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Server Error');
+        console.error(error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
 
@@ -246,7 +302,16 @@ exports.updateOrderStatus = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        if (status) order.status = status;
+        if (status) {
+            // Prevent invalid status transitions
+            if (order.status == 'cancelled' && status != 'cancelled') {
+                return res.status(400).json({ message: 'Cannot change status of cancelled order' });
+            }
+            if (order.status == 'completed' && status != 'completed') {
+                return res.status(400).json({ message: 'Cannot change status of completed order' });
+            }
+            order.status = status;
+        }
         if (payment_status) order.payment_status = payment_status;
 
         await order.save();
@@ -272,7 +337,7 @@ exports.cancelOrder = async (req, res) => {
         }
 
         // Check if order status is pending
-        if (order.status !== 'pending') {
+        if (order.status != 'pending') {
             return res.status(400).json({
                 message: 'Order cannot be cancelled. Only pending orders can be cancelled.'
             });
