@@ -24,6 +24,7 @@ const userRoutes = require('./routes/users');
 const categoryRoutes = require('./routes/categories');
 const menuRoutes = require('./routes/menus');
 const orderRoutes = require('./routes/orders');
+const zalopayRoutes = require('./routes/zalopay');
 const { connectDb } = require('./config/connect');
 connectDb()
 
@@ -46,6 +47,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/category', categoryRoutes);
 app.use('/api/menus', menuRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/zalopay', zalopayRoutes);
 
 
 // catch 404 and forward to error handler

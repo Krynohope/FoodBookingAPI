@@ -13,19 +13,12 @@ const config = {
 };
 
 const payment = async (req, res) => {
-    const cart = req.body.cart
-    // console.log(req.userData.id);
     const embed_data = {
         redirecturl: 'http://localhost:4200/home',
     };
 
-    const items = cart;
-    const total = items.reduce((sum, item) => {
-        if (item.sale_price) {
-            return sum + item.sale_price * item.quantity
-        }
-        return sum + item.price * item.quantity
-    }, 0);
+    const items = [];
+
 
     const transID = Math.floor(Math.random() * 1000000);
 
@@ -36,10 +29,10 @@ const payment = async (req, res) => {
         app_time: Date.now(), // miliseconds
         item: JSON.stringify(items),
         embed_data: JSON.stringify(embed_data),
-        amount: total,
+        amount: 10000,
         description: `Thanh toán cho đơn hàng #${transID}`,
         bank_code: "",
-        callback_url: ''
+        callback_url: 'http://localhost:3000/api/zalopay/callback'
     };
 
     // order

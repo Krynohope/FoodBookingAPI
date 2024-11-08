@@ -67,6 +67,11 @@ const OrderSchema = new mongoose.Schema({
             type: Number,
             required: true,
         },
+        variant_size: {
+            type: String,
+            required: false,
+            default: null
+        }
     }]
 
 }, { timestamps: true });

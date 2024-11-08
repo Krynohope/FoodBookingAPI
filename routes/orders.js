@@ -5,15 +5,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const orderController = require('../controllers/orderController');
 
 // User Routes
-router.post('/', [
-    authMiddleware(),
-    [
-        check('menu_id', 'Menu ID is required').not().isEmpty(),
-        check('quantity', 'Quantity must be at least 1').isInt({ min: 1 }),
-        check('shipping_address', 'Shipping address is required').not().isEmpty(),
-        check('payment_method', 'Payment method is required').isIn(['Thanh toán khi nhận hàng', 'Zalopay'])
-    ]
-], orderController.createOrder);
+router.post('/', authMiddleware(), orderController.createOrder);
 
 // Get user orders with pagination and filters
 router.get('/', authMiddleware(), orderController.getUserOrders);
