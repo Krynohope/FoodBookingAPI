@@ -29,7 +29,10 @@ const MenuSchema = new mongoose.Schema({
         type: Number,
         trim: true,
     },
-
+    star: {
+        type: Number,
+        required: false,
+    },
     variant: [{
         type: {
             size: {

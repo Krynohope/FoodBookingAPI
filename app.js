@@ -24,6 +24,8 @@ const userRoutes = require('./routes/users');
 const categoryRoutes = require('./routes/categories');
 const menuRoutes = require('./routes/menus');
 const orderRoutes = require('./routes/orders');
+const voucherRoutes = require('./routes/vouchers');
+const payment_methodRoutes = require('./routes/payment_methods');
 const zalopayRoutes = require('./routes/zalopay');
 const { connectDb } = require('./config/connect');
 connectDb()
@@ -47,6 +49,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/category', categoryRoutes);
 app.use('/api/menus', menuRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/vouchers', voucherRoutes);
+app.use('/api/payment_methods', payment_methodRoutes);
 app.use('/api/zalopay', zalopayRoutes);
 
 

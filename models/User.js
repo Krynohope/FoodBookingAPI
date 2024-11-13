@@ -20,20 +20,30 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    phone: {
-        type: String,
-        trim: true,
-        match: [/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Please fill a valid phone number']
-    },
     avatar: {
         default: `${process.env.DOMAIN}/images/default.jpg`,
         type: String,
         trim: true
     },
     address: [{
-        default: undefined,
-        type: String,
-        trim: true
+        type: {
+            receiver: {
+                type: String,
+                trim: true
+            },
+            phone: {
+                type: String,
+                required: true,
+                trim: true,
+                match: [/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Please fill a valid phone number']
+            },
+            address: {
+                type: String,
+                required: true,
+                trim: true,
+            },
+        },
+        required: false
     }],
     role: {
         type: String,

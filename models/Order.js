@@ -32,9 +32,9 @@ const OrderSchema = new mongoose.Schema({
     },
 
     payment_method: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payment_method',
         required: true,
-        trim: true,
     },
     payment_status: {
         type: String,
@@ -47,9 +47,22 @@ const OrderSchema = new mongoose.Schema({
         trim: true,
     },
     shipping_address: {
-        type: String,
-        required: true,
-        trim: true,
+        receiver: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        phone: {
+            type: String,
+            required: true,
+            trim: true,
+            match: [/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Please fill a valid phone number']
+        },
+        address: {
+            type: String,
+            required: true,
+            trim: true,
+        }
     },
 
     orderDetail: [{
@@ -71,6 +84,16 @@ const OrderSchema = new mongoose.Schema({
             type: String,
             required: false,
             default: null
+        },
+        rating: {
+            default: null,
+            type: Number,
+            required: false,
+        },
+        comment: {
+            default: null,
+            type: String,
+            required: false,
         }
     }]
 

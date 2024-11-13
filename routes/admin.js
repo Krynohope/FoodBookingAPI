@@ -7,7 +7,6 @@ const menuController = require('../controllers/menuController');
 const categoryController = require('../controllers/categoryController');
 const orderController = require('../controllers/orderController');
 const voucherController = require('../controllers/voucherController');
-const reviewController = require('../controllers/reviewController');
 const { upload, handleMulterError } = require('../middlewares/uploadFile');
 const { body } = require('express-validator');
 
@@ -124,34 +123,10 @@ router.delete('/vouchers/:id',
     voucherController.deleteVoucher
 );
 
-//Review
-router.delete('/reviews/:id',
-    reviewController.deleteReview
-);
 
 
 
 // Dashboard Statistics
-router.get('/stats/orders', orderController.getOrderStats);
-
-router.get('/stats/overview', async (req, res) => {
-    try {
-        // This route would combine various statistics
-        const [orderStats, userStats, menuStats] = await Promise.all([
-            orderController.getOrderStats(),
-            userController.getUserStats(),
-            menuController.getMenuStats()
-        ]);
-
-        res.json({
-            orders: orderStats,
-            users: userStats,
-            menu: menuStats
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching dashboard statistics' });
-    }
-});
 
 
 

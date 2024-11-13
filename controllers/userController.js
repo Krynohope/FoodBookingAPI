@@ -46,20 +46,7 @@ exports.updateProfile = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullname, phone, address } = req.body;
-
-    const userFields = {};
-    if (fullname) userFields.fullname = fullname;
-    if (phone) userFields.phone = phone;
-    if (address) {
-        // Add new address to the array if it doesn't exist
-        userFields.$addToSet = { address: address };
-    }
-
-    // Handle avatar upload
-    if (req.file) {
-        userFields.avatar = `${process.env.DOMAIN}/images/${req.file.filename}`;
-    }
+    const { fullname, phone } = req.body;
 
     try {
         let user = await User.findById(req.user.id);
@@ -70,23 +57,28 @@ exports.updateProfile = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        if (req.file && user.avatar) {
-            const oldPath = path.join('public', user.avatar.replace(process.env.DOMAIN, ''));
-            if (fs.existsSync(oldPath)) {
-                fs.unlinkSync(oldPath);
+        // Handle basic profile updates
+        if (fullname) user.fullname = fullname;
+        if (phone) user.phone = phone;
+
+        // Handle avatar upload
+        if (req.file) {
+            if (user.avatar) {
+                const oldPath = path.join('public', user.avatar.replace(process.env.DOMAIN, ''));
+                if (fs.existsSync(oldPath)) {
+                    fs.unlinkSync(oldPath);
+                }
             }
+            user.avatar = `${process.env.DOMAIN}/images/${req.file.filename}`;
         }
 
-        user = await User.findByIdAndUpdate(
-            req.user.id,
-            userFields,
-            { new: true }
-        ).select('-password');
+        await user.save();
+        const updatedUser = await User.findById(user._id).select('-password');
 
         res.json({
             success: true,
             message: 'Profile updated successfully',
-            data: user
+            data: updatedUser
         });
     } catch (error) {
         if (req.file) {
@@ -97,25 +89,106 @@ exports.updateProfile = async (req, res) => {
     }
 };
 
-// Remove address
-exports.removeAddress = async (req, res) => {
-    const { address } = req.body;
+// Add shipping address
+exports.addAddress = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
 
     try {
-        const user = await User.findByIdAndUpdate(
-            req.user.id,
-            { $pull: { address: address } },
-            { new: true }
-        ).select('-password');
-
+        const user = await User.findById(req.user.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        const newAddress = {
+            receiver: req.body.receiver,
+            phone: req.body.phone,
+            address: req.body.address
+        };
+
+        user.address.push(newAddress);
+        await user.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Address added successfully',
+            data: user.address[user.address.length - 1]
+        });
+    } catch (error) {
+        console.error('Error in addAddress:', error.message);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Update shipping address
+exports.updateAddress = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const addressIndex = user.address.findIndex(
+            addr => addr._id.toString() === req.params.addressId
+        );
+
+        if (addressIndex === -1) {
+            return res.status(404).json({ message: 'Address not found' });
+        }
+
+        // Update address fields
+        user.address[addressIndex] = {
+            ...user.address[addressIndex].toObject(),
+            receiver: req.body.receiver || user.address[addressIndex].receiver,
+            phone: req.body.phone || user.address[addressIndex].phone,
+            address: req.body.address || user.address[addressIndex].address
+        };
+
+        await user.save();
+
         res.json({
             success: true,
-            message: 'Address removed successfully',
-            data: user
+            message: 'Address updated successfully',
+            data: user.address[addressIndex]
+        });
+    } catch (error) {
+        console.error('Error in updateAddress:', error.message);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Remove shipping address
+exports.removeAddress = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const addressExists = user.address.some(
+            addr => addr._id.toString() === req.params.addressId
+        );
+
+        if (!addressExists) {
+            return res.status(404).json({ message: 'Address not found' });
+        }
+
+        user.address = user.address.filter(
+            addr => addr._id.toString() !== req.params.addressId
+        );
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Address removed successfully'
         });
     } catch (error) {
         console.error('Error in removeAddress:', error.message);

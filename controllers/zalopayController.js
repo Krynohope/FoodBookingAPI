@@ -13,6 +13,8 @@ const config = {
 };
 
 const payment = async (req, res) => {
+
+
     const embed_data = {
         redirecturl: 'http://localhost:4200/home',
     };
@@ -32,10 +34,8 @@ const payment = async (req, res) => {
         amount: 10000,
         description: `Thanh toán cho đơn hàng #${transID}`,
         bank_code: "",
-        callback_url: 'http://localhost:3000/api/zalopay/callback'
+        callback_url: 'https://f773-2402-800-63f3-d17d-ed5e-2689-daca-1070.ngrok-free.app/api/zalopay/callback'
     };
-
-    // order
 
     // appid|app_trans_id|appuser|amount|apptime|embeddata|item
     const data = config.app_id + "|" + order.app_trans_id + "|" + order.app_user + "|" + order.amount + "|" + order.app_time + "|" + order.embed_data + "|" + order.item;
@@ -68,6 +68,8 @@ const zlpCallback = (req, res) => {
         else {
             // thanh toán thành công
             // merchant cập nhật trạng thái cho đơn hàng
+
+
             let dataJson = JSON.parse(dataStr, config.key2);
             console.log("update order's status = success where app_trans_id =", dataJson["app_trans_id"]);
 
