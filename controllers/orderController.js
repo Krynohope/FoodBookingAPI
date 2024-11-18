@@ -4,7 +4,9 @@ const Menu = require('../models/Menu');
 const Voucher = require('../models/Voucher');
 const Payment_method = require('../models/Payment_method');
 const User = require('../models/User');
+const zalopayController = require('./zalopayController')
 const dotenv = require('dotenv');
+const { request } = require('express');
 dotenv.config();
 
 
@@ -184,22 +186,35 @@ exports.createOrder = async (req, res) => {
             { path: 'voucher_id' }
         ]);
 
-        const response = {
-            message: 'Order placed successfully',
-            order,
-            orderSummary: {
-                subtotal,
-                shippingCost,
-                discount: voucher ? {
-                    name: voucher.name,
-                    discountPercent: voucher.discount_percent,
-                    discountAmount: total - subtotal + shippingCost
-                } : null,
-                total
-            }
-        };
+        const paymentName = await Payment_method.findById(order.payment_method)
 
-        return res.status(201).json(response);
+        switch (paymentName.name.toLowerCase()) {
+            case 'zalopay':
+
+                const zlpay = await zalopayController.payment(req, res)
+
+                return res.redirect(zlpay.order_url)
+
+
+            default:
+                const response = {
+                    message: 'Order placed successfully',
+                    order,
+                    orderSummary: {
+                        subtotal,
+                        shippingCost,
+                        discount: voucher ? {
+                            name: voucher.name,
+                            discountPercent: voucher.discount_percent,
+                            discountAmount: total - subtotal + shippingCost
+                        } : null,
+                        total
+                    }
+                };
+
+                return res.status(201).json(response);
+        }
+
 
     } catch (error) {
         console.error(error);

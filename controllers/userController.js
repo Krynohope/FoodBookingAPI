@@ -69,7 +69,7 @@ exports.updateProfile = async (req, res) => {
                     fs.unlinkSync(oldPath);
                 }
             }
-            user.avatar = `${process.env.DOMAIN}/images/${req.file.filename}`;
+            user.avatar = `${req.file.filename}`;
         }
 
         await user.save();
@@ -235,7 +235,7 @@ exports.createUser = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullname, email, password, phone } = req.body;
+    const { fullname, email, password, phone, role } = req.body;
 
     try {
         let user = await User.findOne({ email });
@@ -248,6 +248,7 @@ exports.createUser = async (req, res) => {
             email,
             password,
             phone,
+            role
         });
 
 

@@ -79,7 +79,7 @@ exports.createCategory = async (req, res) => {
         }
 
         const { name, description } = req.body;
-        const imgPath = req.file ? `${process.env.DOMAIN}/images/${req.file.filename}` : null;
+        const imgPath = req.file ? `${req.file.filename}` : null;
 
         const category = new Category({
             name,
@@ -133,7 +133,7 @@ exports.updateCategory = async (req, res) => {
                     fs.unlinkSync(oldPath);
                 }
             }
-            updateData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+            updateData.img = `${req.file.filename}`;
         }
 
         category = await Category.findByIdAndUpdate(

@@ -148,7 +148,7 @@ exports.createMenuItem = async (req, res) => {
         };
 
         if (req.file) {
-            menuItemData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+            menuItemData.img = `/${req.file.filename}`;
         }
 
         const menuItem = new Menu(menuItemData);
@@ -217,7 +217,7 @@ exports.createMenuItem = async (req, res) => {
         };
 
         if (req.file) {
-            menuItemData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+            menuItemData.img = `${req.file.filename}`;
         }
 
         const menuItem = new Menu(menuItemData);
@@ -284,7 +284,7 @@ exports.updateMenuItem = async (req, res) => {
                     fs.unlinkSync(oldPath);
                 }
             }
-            updateData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+            updateData.img = `${req.file.filename}`;
         }
 
         if (variant === null) {

@@ -15,8 +15,6 @@ router.patch('/profile',
     handleMulterError,
     [
         check('fullname', 'Full name is required').optional().not().isEmpty(),
-        check('email', 'Please include a valid email').optional().isEmail(),
-        check('phone').optional(),
     ],
     updateProfile
 );

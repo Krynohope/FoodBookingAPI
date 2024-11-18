@@ -19,7 +19,7 @@ const payment = async (req, res) => {
         redirecturl: 'http://localhost:4200/home',
     };
 
-    const items = [];
+    const items = req.body.orderItems;
 
 
     const transID = Math.floor(Math.random() * 1000000);
@@ -34,7 +34,7 @@ const payment = async (req, res) => {
         amount: 10000,
         description: `Thanh toán cho đơn hàng #${transID}`,
         bank_code: "",
-        callback_url: 'https://f773-2402-800-63f3-d17d-ed5e-2689-daca-1070.ngrok-free.app/api/zalopay/callback'
+        callback_url: ' https://d4a3-2402-800-63f3-ba02-585a-cdd0-17cd-150d.ngrok-free.app/api/zalopay/callback'
     };
 
     // appid|app_trans_id|appuser|amount|apptime|embeddata|item
@@ -42,7 +42,7 @@ const payment = async (req, res) => {
     order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
     try {
         const result = await axios.post(config.endpoint, null, { params: order })
-        return res.status(201).json(result.data)
+        return result.data
     } catch (error) {
         return res.status(400).json(error)
     }

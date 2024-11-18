@@ -85,7 +85,7 @@ exports.createPaymentMethod = async (req, res) => {
         }
 
         const { name, type, description, status } = req.body;
-        const imgPath = req.file ? `${process.env.DOMAIN}/images/${req.file.filename}` : null;
+        const imgPath = req.file ? `${req.file.filename}` : null;
 
         const paymentMethod = new Payment_method({
             name,
@@ -143,7 +143,7 @@ exports.updatePaymentMethod = async (req, res) => {
                     fs.unlinkSync(oldPath);
                 }
             }
-            updateData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+            updateData.img = `/${req.file.filename}`;
         }
 
         paymentMethod = await Payment_method.findByIdAndUpdate(

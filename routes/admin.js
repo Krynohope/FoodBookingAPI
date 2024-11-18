@@ -6,6 +6,7 @@ const userController = require('../controllers/userController');
 const menuController = require('../controllers/menuController');
 const categoryController = require('../controllers/categoryController');
 const orderController = require('../controllers/orderController');
+const payment_methodController = require('../controllers/payment_methodController');
 const voucherController = require('../controllers/voucherController');
 const { upload, handleMulterError } = require('../middlewares/uploadFile');
 const { body } = require('express-validator');
@@ -23,13 +24,11 @@ router.post('/users', [
     check('fullname', 'Full name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
-    check('phone').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
 ], userController.createUser);
 
 router.patch('/users/:id', [
     check('fullname').optional().not().isEmpty(),
     check('email').optional().isEmail(),
-    check('phone').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
 ], userController.updateUser);
 
 router.delete('/users/:id', userController.deleteUser);
@@ -124,6 +123,24 @@ router.delete('/vouchers/:id',
 );
 
 
+//Payment methods
+
+// Validation middleware
+const paymentMethodValidation = [
+    check('name', 'Name is required').not().isEmpty(),
+    check('type', 'Type is required').not().isEmpty(),
+    check('status', 'Status is required').not().isEmpty()
+];
+router.post('/payment_methods',
+    upload.single('img'),
+    paymentMethodValidation,
+    payment_methodController.createPaymentMethod
+);
+router.patch('/payment_methods/:id',
+    upload.single('img'),
+    payment_methodController.updatePaymentMethod
+);
+router.delete('/payment_methods/:id', payment_methodController.deletePaymentMethod);
 
 
 // Dashboard Statistics
