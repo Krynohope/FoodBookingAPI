@@ -147,7 +147,7 @@ exports.createVoucher = async (req, res) => {
         }
 
         const { name, code, discount_percent, start, end, limit, min_order } = req.body;
-        const imgPath = req.file ? `${process.env.DOMAIN}/images/${req.file.filename}` : null;
+        const imgPath = req.file ? `${req.file.filename}` : null;
 
         const voucher = new Voucher({
             name,
@@ -208,7 +208,7 @@ exports.updateVoucher = async (req, res) => {
                     fs.unlinkSync(oldPath);
                 }
             }
-            updateData.img = `${process.env.DOMAIN}/images/${req.file.filename}`;
+            updateData.img = `${req.file.filename}`;
         }
 
         voucher = await Voucher.findByIdAndUpdate(

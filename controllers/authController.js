@@ -168,7 +168,7 @@ exports.login = async (req, res) => {
             }
         };
 
-        const token = jwt.sign(payload, process.env.SECRET_KEY_ACCESS_TOKEN, { expiresIn: '1h' });
+        const token = jwt.sign(payload, process.env.SECRET_KEY_ACCESS_TOKEN, { expiresIn: '3h' });
 
         const cookieOptions = {
             httpOnly: true,

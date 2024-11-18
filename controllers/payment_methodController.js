@@ -1,23 +1,29 @@
 const { validationResult } = require('express-validator');
-const Category = require('../models/Category');
+const Payment_method = require('../models/Payment_method');
 const { removeUploadedFile } = require('../middlewares/uploadFile');
 const path = require('path');
 const fs = require('fs');
 
-// Get categories with name filter
-exports.getCategories = async (req, res) => {
+// Get payment methods with filters and pagination
+exports.getPaymentMethods = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
-        const name = req.query.name;
+        const { name, type, status } = req.query;
 
         let query = {};
         if (name) {
             query.name = { $regex: name, $options: 'i' };
         }
+        if (type) {
+            query.type = { $regex: type, $options: 'i' };
+        }
+        if (status) {
+            query.status = status;
+        }
 
-        const total = await Category.countDocuments(query);
-        const categories = await Category.find(query)
+        const total = await Payment_method.countDocuments(query);
+        const paymentMethods = await Payment_method.find(query)
             .select('-__v')
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
@@ -26,7 +32,7 @@ exports.getCategories = async (req, res) => {
         res.json({
             success: true,
             data: {
-                categories,
+                paymentMethods,
                 pagination: {
                     currentPage: page,
                     totalPages: Math.ceil(total / limit),
@@ -36,36 +42,36 @@ exports.getCategories = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Get categories error:', error);
+        console.error('Get payment methods error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error fetching categories'
+            message: 'Error fetching payment methods'
         });
     }
 };
 
-// Get single category
-exports.getCategoryById = async (req, res) => {
+// Get single payment method
+exports.getPaymentMethodById = async (req, res) => {
     try {
-        const category = await Category.findById(req.params.id).select('-__v');
-        if (!category) {
+        const paymentMethod = await Payment_method.findById(req.params.id).select('-__v');
+        if (!paymentMethod) {
             return res.status(404).json({
                 success: false,
-                message: 'Category not found'
+                message: 'Payment method not found'
             });
         }
-        res.json({ success: true, data: category });
+        res.json({ success: true, data: paymentMethod });
     } catch (error) {
-        console.error('Get category error:', error);
+        console.error('Get payment method error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error fetching category'
+            message: 'Error fetching payment method'
         });
     }
 };
 
-// Create category
-exports.createCategory = async (req, res) => {
+// Create payment method
+exports.createPaymentMethod = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -78,65 +84,69 @@ exports.createCategory = async (req, res) => {
             });
         }
 
-        const { name, description } = req.body;
+        const { name, type, description, status } = req.body;
         const imgPath = req.file ? `${req.file.filename}` : null;
 
-        const category = new Category({
+        const paymentMethod = new Payment_method({
             name,
+            type,
             description,
+            status,
             img: imgPath
         });
 
-        await category.save();
+        await paymentMethod.save();
 
         res.status(201).json({
             success: true,
-            message: 'Category created successfully',
-            data: category
+            message: 'Payment method created successfully',
+            data: paymentMethod
         });
 
     } catch (error) {
         if (req.file) {
             removeUploadedFile(req.file.path);
         }
-        console.error('Create category error:', error);
+        console.error('Create payment method error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error creating category'
+            message: 'Error creating payment method'
         });
     }
 };
 
-// Update category
-exports.updateCategory = async (req, res) => {
+// Update payment method
+exports.updatePaymentMethod = async (req, res) => {
     try {
-        let category = await Category.findById(req.params.id);
-        if (!category) {
+        let paymentMethod = await Payment_method.findById(req.params.id);
+        if (!paymentMethod) {
             if (req.file) {
                 removeUploadedFile(req.file.path);
             }
             return res.status(404).json({
                 success: false,
-                message: 'Category not found'
+                message: 'Payment method not found'
             });
         }
 
         const updateData = {};
         if (req.body.name) updateData.name = req.body.name;
+        if (req.body.type) updateData.type = req.body.type;
         if (req.body.description) updateData.description = req.body.description;
+        if (req.body.status) updateData.status = req.body.status;
 
         if (req.file) {
             // Remove old image if exists
-            if (category.img) {
-                const oldPath = path.join('public', category.img);
+            if (paymentMethod.img) {
+                const oldPath = path.join('public', paymentMethod.img);
                 if (fs.existsSync(oldPath)) {
                     fs.unlinkSync(oldPath);
                 }
             }
-            updateData.img = `${req.file.filename}`;
+            updateData.img = `/${req.file.filename}`;
         }
 
-        category = await Category.findByIdAndUpdate(
+        paymentMethod = await Payment_method.findByIdAndUpdate(
             req.params.id,
             updateData,
             { new: true, runValidators: true }
@@ -144,54 +154,54 @@ exports.updateCategory = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Category updated successfully',
-            data: category
+            message: 'Payment method updated successfully',
+            data: paymentMethod
         });
 
     } catch (error) {
         if (req.file) {
             removeUploadedFile(req.file.path);
         }
-        console.error('Update category error:', error);
+        console.error('Update payment method error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating category'
+            message: 'Error updating payment method'
         });
     }
 };
 
-// Delete category
-exports.deleteCategory = async (req, res) => {
+// Delete payment method
+exports.deletePaymentMethod = async (req, res) => {
     try {
-        const category = await Category.findById(req.params.id);
-        if (!category) {
+        const paymentMethod = await Payment_method.findById(req.params.id);
+        if (!paymentMethod) {
             return res.status(404).json({
                 success: false,
-                message: 'Category not found'
+                message: 'Payment method not found'
             });
         }
 
         // Remove image if exists
-        if (category.img) {
-            const imagePath = path.join('public', category.img);
+        if (paymentMethod.img) {
+            const imagePath = path.join('public', paymentMethod.img);
             if (fs.existsSync(imagePath)) {
                 fs.unlinkSync(imagePath);
             }
         }
 
-        await category.deleteOne();
+        await paymentMethod.deleteOne();
 
         res.json({
             success: true,
-            message: 'Category deleted successfully',
+            message: 'Payment method deleted successfully',
             data: { id: req.params.id }
         });
 
     } catch (error) {
-        console.error('Delete category error:', error);
+        console.error('Delete payment method error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error deleting category'
+            message: 'Error deleting payment method'
         });
     }
 };

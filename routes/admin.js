@@ -6,8 +6,8 @@ const userController = require('../controllers/userController');
 const menuController = require('../controllers/menuController');
 const categoryController = require('../controllers/categoryController');
 const orderController = require('../controllers/orderController');
+const payment_methodController = require('../controllers/payment_methodController');
 const voucherController = require('../controllers/voucherController');
-const reviewController = require('../controllers/reviewController');
 const { upload, handleMulterError } = require('../middlewares/uploadFile');
 const { body } = require('express-validator');
 
@@ -24,13 +24,11 @@ router.post('/users', [
     check('fullname', 'Full name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
-    check('phone').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
 ], userController.createUser);
 
 router.patch('/users/:id', [
     check('fullname').optional().not().isEmpty(),
     check('email').optional().isEmail(),
-    check('phone').optional().matches(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/)
 ], userController.updateUser);
 
 router.delete('/users/:id', userController.deleteUser);
@@ -106,7 +104,7 @@ const voucherValidation = [
     body('start').isISO8601().withMessage('Start date must be valid'),
     body('end').isISO8601().withMessage('End date must be valid'),
     body('limit').isInt({ min: 0 }).withMessage('Limit must be a positive number'),
-    body('min_price').isFloat({ min: 0 }).withMessage('Minimum order must be a positive number')
+    body('min_price')
 ];
 
 router.post('/vouchers',
@@ -124,34 +122,28 @@ router.delete('/vouchers/:id',
     voucherController.deleteVoucher
 );
 
-//Review
-router.delete('/reviews/:id',
-    reviewController.deleteReview
-);
 
+//Payment methods
+
+// Validation middleware
+const paymentMethodValidation = [
+    check('name', 'Name is required').not().isEmpty(),
+    check('type', 'Type is required').not().isEmpty(),
+    check('status', 'Status is required').not().isEmpty()
+];
+router.post('/payment_methods',
+    upload.single('img'),
+    paymentMethodValidation,
+    payment_methodController.createPaymentMethod
+);
+router.patch('/payment_methods/:id',
+    upload.single('img'),
+    payment_methodController.updatePaymentMethod
+);
+router.delete('/payment_methods/:id', payment_methodController.deletePaymentMethod);
 
 
 // Dashboard Statistics
-router.get('/stats/orders', orderController.getOrderStats);
-
-router.get('/stats/overview', async (req, res) => {
-    try {
-        // This route would combine various statistics
-        const [orderStats, userStats, menuStats] = await Promise.all([
-            orderController.getOrderStats(),
-            userController.getUserStats(),
-            menuController.getMenuStats()
-        ]);
-
-        res.json({
-            orders: orderStats,
-            users: userStats,
-            menu: menuStats
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching dashboard statistics' });
-    }
-});
 
 
 

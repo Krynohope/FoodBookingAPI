@@ -30,7 +30,6 @@ const VoucherSchema = new mongoose.Schema({
     },
     min_price: {
         type: Number,
-        required: true,
     },
     img: {
         type: String,
