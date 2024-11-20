@@ -2,7 +2,8 @@ const axios = require('axios').default;
 const CryptoJS = require('crypto-js');
 const qs = require('qs')
 const moment = require('moment');
-const orderModel = require('../models/Order')
+const orderModel = require('../models/Order');
+const Order = require('../models/Order');
 
 
 const config = {
@@ -19,7 +20,8 @@ const payment = async (req, res) => {
         redirecturl: 'http://localhost:4200/home',
     };
 
-    const items = req.body.orderItems;
+    const orderData = req.order;
+
 
 
     const transID = Math.floor(Math.random() * 1000000);
@@ -27,15 +29,20 @@ const payment = async (req, res) => {
     const order = {
         app_id: config.app_id,
         app_trans_id: `${moment().format('YYMMDD')}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
-        app_user: "user123",
+        app_user: orderData.user_id,
         app_time: Date.now(), // miliseconds
-        item: JSON.stringify(items),
+        item: JSON.stringify(orderData.orderDetail),
         embed_data: JSON.stringify(embed_data),
-        amount: 10000,
-        description: `Thanh toán cho đơn hàng #${transID}`,
+        amount: orderData.total,
+        description: `Thanh toán cho đơn hàng #${orderData.order_id}`,
         bank_code: "",
-        callback_url: ' https://d4a3-2402-800-63f3-ba02-585a-cdd0-17cd-150d.ngrok-free.app/api/zalopay/callback'
+        // callback_url: 'https://7d8c-2402-800-63f3-f2db-c99c-8d79-23f3-e0ca.ngrok-free.app/api/zalopay/callback'
+        callback_url: 'https://foodbookingapi.onrender.com/api/zalopay/callback'
     };
+
+    orderData.app_trans_id = order.app_trans_id
+    await Order.findOneAndUpdate({ order_id: orderData.order_id }, { app_trans_id: orderData.app_trans_id })
+
 
     // appid|app_trans_id|appuser|amount|apptime|embeddata|item
     const data = config.app_id + "|" + order.app_trans_id + "|" + order.app_user + "|" + order.amount + "|" + order.app_time + "|" + order.embed_data + "|" + order.item;
@@ -48,7 +55,7 @@ const payment = async (req, res) => {
     }
 }
 
-const zlpCallback = (req, res) => {
+const zlpCallback = async (req, res) => {
     let result = {};
 
     try {
@@ -69,9 +76,10 @@ const zlpCallback = (req, res) => {
             // thanh toán thành công
             // merchant cập nhật trạng thái cho đơn hàng
 
-
             let dataJson = JSON.parse(dataStr, config.key2);
             console.log("update order's status = success where app_trans_id =", dataJson["app_trans_id"]);
+
+            await Order.findOneAndUpdate({ app_trans_id: dataJson["app_trans_id"] }, { payment_status: 'success', status: 'processing' });
 
             result.return_code = 1;
             result.return_message = "success";
@@ -84,6 +92,7 @@ const zlpCallback = (req, res) => {
     // thông báo kết quả cho ZaloPay server
     res.json(result);
 }
+
 const checkStatus = async (req, res) => {
     const app_trans_id = req.params.app_trans_id
 

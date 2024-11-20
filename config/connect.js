@@ -5,6 +5,8 @@ dotenv.config();
 const connectDb = async () => {
     try {
         const connect = await mongoose.connect(process.env.MONGODB_URI)
+        console.log('Connected to Mongo');
+
         return connect
     } catch (error) {
         console.error('Error fetching data from database:', error);
