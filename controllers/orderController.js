@@ -7,6 +7,7 @@ const User = require('../models/User');
 const zalopayController = require('./zalopayController')
 const dotenv = require('dotenv');
 const { request } = require('express');
+
 dotenv.config();
 
 
@@ -100,13 +101,13 @@ exports.createOrder = async (req, res) => {
         }
 
         // Calculate shipping cost
-        let shippingCost = 30000; // Default shipping cost
+        let shippingCost = 15000; // Default shipping cost
         const totalItems = processedItems.reduce((sum, item) => sum + item.quantity, 0);
 
         if (totalItems > 6) {
             shippingCost = 0;
         } else if (totalItems > 3) {
-            shippingCost = 15000;
+            shippingCost = 10000;
         }
 
         // Process voucher if provided
@@ -170,6 +171,7 @@ exports.createOrder = async (req, res) => {
             orderDetail: processedItems
         });
 
+        req.order = order
         // Update menu item quantities
         for (const item of processedItems) {
             const menu = await Menu.findById(item.menu_id);
@@ -192,8 +194,7 @@ exports.createOrder = async (req, res) => {
             case 'zalopay':
 
                 const zlpay = await zalopayController.payment(req, res)
-
-                return res.redirect(zlpay.order_url)
+                return res.json({ order_url: zlpay.order_url })
 
 
             default:

@@ -20,6 +20,11 @@ const OrderSchema = new mongoose.Schema({
         required: false,
         default: null
     },
+    app_trans_id: {
+        type: String,
+        required: false,
+        default: null
+    },
     status: {
         type: String,
         required: true,

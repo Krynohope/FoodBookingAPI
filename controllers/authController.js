@@ -180,7 +180,7 @@ exports.login = async (req, res) => {
 
         res.cookie('access_token', token, cookieOptions);
 
-        return res.json({ token });
+        return res.json({ token, role: user.role });
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
