@@ -5,13 +5,9 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require("cors");
 const corsOptions = {
-  origin: true,
+  origin: 'http://localhost:3000',
   credentials: true,
   optionSuccessStatus: 200,
-}
-
-const cookieOptions = {
-  httpOnly: true
 }
 
 var app = express();
