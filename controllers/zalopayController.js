@@ -119,7 +119,7 @@ const checkStatus = async (req, res) => {
     try {
         const result = await axios(postConfig)
         if (result.data.return_code === 2 || result.data.return_code === 3) {
-            await Order.findOneAndUpdate({ app_trans_id }, { payment_status: 'failed', status: 'canceled' });
+            await Order.findOneAndUpdate({ app_trans_id }, { payment_status: 'failed', status: 'cancelled' });
         }
         return res.status(200).json(result.data);
     } catch (error) {

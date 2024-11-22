@@ -27,8 +27,8 @@ const OrderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        required: true,
-        trim: true,
+        enum: ['pending', 'processing', 'success', 'failed'],
+        default: 'pending',
     },
 
     total: {
@@ -43,8 +43,8 @@ const OrderSchema = new mongoose.Schema({
     },
     payment_status: {
         type: String,
-        required: true,
-        trim: true,
+        enum: ['pending', 'success', 'failed'],
+        default: 'pending',
     },
     ship: {
         type: Number,
