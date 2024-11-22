@@ -170,18 +170,14 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign(payload, process.env.SECRET_KEY_ACCESS_TOKEN, { expiresIn: '3h' });
 
-        const cookieOptions = process.env.NODE_ENV === 'production' ? {
+        const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'None',
             maxAge: 24 * 60 * 60 * 1000,
             path: '/'
-        } :
-            {
-                httpOnly: true,
-                maxAge: 24 * 60 * 60 * 1000,
-                path: '/'
-            }
+        };
+
         res.cookie('access_token', token, cookieOptions);
 
         return res.json({ token, role: user.role });
@@ -193,17 +189,13 @@ exports.login = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
-        const cookieOptions = process.env.NODE_ENV === 'production' ? {
+
+        res.clearCookie('access_token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'None',
             path: '/'
-        } :
-            {
-                httpOnly: true,
-                path: '/'
-            }
-        res.clearCookie('access_token', cookieOptions);
+        });
 
         res.json({ msg: 'Logged out successfully' });
     } catch (err) {
