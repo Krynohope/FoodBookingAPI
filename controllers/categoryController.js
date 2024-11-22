@@ -171,6 +171,14 @@ exports.deleteCategory = async (req, res) => {
             });
         }
 
+        const menuItems = await Menu.find({ category: req.params.id });
+        if (menuItems.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot delete category because it is referenced by ${menuItems.length} menu items`
+            });
+        }
+
         // Remove image if exists
         if (category.img) {
             const imagePath = path.join('public', category.img);

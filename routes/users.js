@@ -7,9 +7,11 @@ const { upload, handleMulterError } = require('../middlewares/uploadFile');
 
 router.use(authMiddleware());
 
-//Ge and update profile
+//Get profile
 router.get('/profile', getProfile);
 
+
+//Update profile
 router.patch('/profile',
     upload.single('avatar'),
     handleMulterError,

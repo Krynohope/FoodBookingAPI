@@ -95,10 +95,10 @@ exports.applyVoucher = async (req, res) => {
         }
 
         // Check minimum order amount
-        if (orderTotal < voucher.min_order) {
+        if (orderTotal < voucher.min_price) {
             return res.status(400).json({
                 success: false,
-                message: `Minimum order amount required is ${voucher.min_order}`
+                message: `Minimum order amount required is ${voucher.min_price}`
             });
         }
 
@@ -146,7 +146,7 @@ exports.createVoucher = async (req, res) => {
             });
         }
 
-        const { name, code, discount_percent, start, end, limit, min_order } = req.body;
+        const { name, code, discount_percent, start, end, limit, min_price } = req.body;
         const imgPath = req.file ? `${req.file.filename}` : null;
 
         const voucher = new Voucher({
@@ -156,7 +156,7 @@ exports.createVoucher = async (req, res) => {
             start,
             end,
             limit,
-            min_order,
+            min_price,
             img: imgPath
         });
 
@@ -195,7 +195,7 @@ exports.updateVoucher = async (req, res) => {
         }
 
         const updateData = {};
-        const fields = ['name', 'code', 'discount_percent', 'start', 'end', 'limit', 'min_order'];
+        const fields = ['name', 'code', 'discount_percent', 'start', 'end', 'limit', 'min_price'];
         fields.forEach(field => {
             if (req.body[field] !== undefined) updateData[field] = req.body[field];
         });
@@ -243,6 +243,14 @@ exports.deleteVoucher = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Voucher not found'
+            });
+        }
+
+        const existingOrders = await Order.findOne({ voucher_id: req.params.id });
+        if (existingOrders) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete voucher as it has been used in existing orders'
             });
         }
 
