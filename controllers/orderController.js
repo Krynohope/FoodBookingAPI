@@ -365,7 +365,7 @@ exports.updateOrderStatus = async (req, res) => {
     }
 };
 
-// Cancel order (within 5 minutes)
+// Cancel order
 exports.cancelOrder = async (req, res) => {
     try {
         const order = await Order.findOne({ order_id: req.params.id });
@@ -381,13 +381,6 @@ exports.cancelOrder = async (req, res) => {
         if (order.status !== 'pending') {
             return res.status(400).json({
                 message: 'Order cannot be cancelled. Only pending orders can be cancelled.'
-            });
-        }
-
-        const timeDifference = (Date.now() - order.createdAt.getTime()) / (1000 * 60);
-        if (timeDifference > 5) {
-            return res.status(400).json({
-                message: 'Order cannot be cancelled. The 5-minute cancellation window has expired.'
             });
         }
 
@@ -687,5 +680,241 @@ exports.getAllReviews = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+exports.getOrderStatistics = async (req, res) => {
+
+    try {
+        // Get current date
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+
+        // Get status counts
+        const orderStatusStats = await Order.aggregate([
+            {
+                $group: {
+                    _id: '$status',
+                    count: { $sum: 1 },
+                    totalAmount: { $sum: '$total' }
+                }
+            }
+        ]);
+
+        // Get payment status counts
+        const paymentStatusStats = await Order.aggregate([
+            {
+                $group: {
+                    _id: '$payment_status',
+                    count: { $sum: 1 },
+                    totalAmount: { $sum: '$total' }
+                }
+            }
+        ]);
+
+        // Get monthly statistics
+        const monthlyStats = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: new Date(currentYear, currentMonth - 1, 1),
+                        $lt: new Date(currentYear, currentMonth, 1)
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    totalAmount: { $sum: '$total' },
+                    averageOrderValue: { $avg: '$total' },
+                    successfulOrders: {
+                        $sum: {
+                            $cond: [{ $eq: ['$status', 'success'] }, 1, 0]
+                        }
+                    },
+                    canceledOrders: {
+                        $sum: {
+                            $cond: [{ $eq: ['$status', 'canceled'] }, 1, 0]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        // Get yearly statistics
+        const yearlyStats = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: new Date(currentYear, 0, 1),
+                        $lt: new Date(currentYear + 1, 0, 1)
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: '$createdAt' },
+                    totalOrders: { $sum: 1 },
+                    totalAmount: { $sum: '$total' },
+                    averageOrderValue: { $avg: '$total' }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format response
+        const statistics = {
+            orderStatus: orderStatusStats.reduce((acc, curr) => {
+                acc[curr._id] = {
+                    count: curr.count,
+                    totalAmount: curr.totalAmount
+                };
+                return acc;
+            }, {}),
+            paymentStatus: paymentStatusStats.reduce((acc, curr) => {
+                acc[curr._id] = {
+                    count: curr.count,
+                    totalAmount: curr.totalAmount
+                };
+                return acc;
+            }, {}),
+            currentMonth: {
+                ...monthlyStats[0],
+                month: currentMonth,
+                year: currentYear
+            },
+            yearlyStats: yearlyStats.map(stat => ({
+                month: stat._id,
+                totalOrders: stat.totalOrders,
+                totalAmount: stat.totalAmount,
+                averageOrderValue: stat.averageOrderValue
+            })),
+        };
+
+        res.json({
+            success: true,
+            data: statistics
+        });
+
+    } catch (error) {
+        console.error('Get order statistics error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching order statistics'
+        });
+    }
+};
+
+// Get statistics for a specific date range
+exports.getOrderStatisticsByDateRange = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                success: false,
+                message: 'Start date and end date are required'
+            });
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        const statistics = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: start,
+                        $lte: end
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    totalAmount: { $sum: '$total' },
+                    averageOrderValue: { $avg: '$total' },
+                    ordersByStatus: {
+                        $push: {
+                            status: '$status',
+                            total: '$total'
+                        }
+                    },
+                    ordersByPaymentStatus: {
+                        $push: {
+                            paymentStatus: '$payment_status',
+                            total: '$total'
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    totalOrders: 1,
+                    totalAmount: 1,
+                    averageOrderValue: 1,
+                    ordersByStatus: 1,
+                    ordersByPaymentStatus: 1
+                }
+            }
+        ]);
+
+        // Process status statistics
+        const statusStats = {};
+        const paymentStatusStats = {};
+
+        if (statistics.length > 0) {
+            statistics[0].ordersByStatus.forEach(order => {
+                if (!statusStats[order.status]) {
+                    statusStats[order.status] = {
+                        count: 0,
+                        totalAmount: 0
+                    };
+                }
+                statusStats[order.status].count++;
+                statusStats[order.status].totalAmount += order.total;
+            });
+
+            statistics[0].ordersByPaymentStatus.forEach(order => {
+                if (!paymentStatusStats[order.paymentStatus]) {
+                    paymentStatusStats[order.paymentStatus] = {
+                        count: 0,
+                        totalAmount: 0
+                    };
+                }
+                paymentStatusStats[order.paymentStatus].count++;
+                paymentStatusStats[order.paymentStatus].totalAmount += order.total;
+            });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                period: {
+                    start: startDate,
+                    end: endDate
+                },
+                overview: statistics[0] ? {
+                    totalOrders: statistics[0].totalOrders,
+                    totalAmount: statistics[0].totalAmount,
+                    averageOrderValue: statistics[0].averageOrderValue
+                } : null,
+                statusStatistics: statusStats,
+                paymentStatusStatistics: paymentStatusStats
+            }
+        });
+
+    } catch (error) {
+        console.error('Get order statistics by date range error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching order statistics'
+        });
     }
 };

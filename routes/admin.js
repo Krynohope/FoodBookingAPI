@@ -74,8 +74,8 @@ router.patch('/cate/:id',
     categoryController.updateCategory
 );
 
-
 router.delete('/cate/:id', categoryController.deleteCategory);
+
 
 // Order Management Routes
 router.get('/orders', [
@@ -93,6 +93,10 @@ router.patch('/orders/:id/status', [
         check('payment_status').optional().isIn(['pending', 'paid', 'failed'])
     ]
 ], orderController.updateOrderStatus);
+
+
+//Review management
+router.get('/reviews', orderController.getAllReviews);
 
 
 
@@ -144,7 +148,8 @@ router.delete('/payment_methods/:id', payment_methodController.deletePaymentMeth
 
 
 // Dashboard Statistics
-
+router.get('/statistics', authMiddleware('admin'), orderController.getOrderStatistics);
+router.get('/statistics/range', authMiddleware('admin'), orderController.getOrderStatisticsByDateRange);
 
 
 module.exports = router;

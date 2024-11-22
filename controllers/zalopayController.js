@@ -49,6 +49,8 @@ const payment = async (req, res) => {
     order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
     try {
         const result = await axios.post(config.endpoint, null, { params: order })
+        // await Order.findOneAndUpdate({ app_trans_id: dataJson["app_trans_id"] }, { payment_status: 'failed', status: 'canceled' });
+
         return result.data
     } catch (error) {
         return res.status(400).json(error)
@@ -116,6 +118,9 @@ const checkStatus = async (req, res) => {
 
     try {
         const result = await axios(postConfig)
+        if (result.data.return_code === 2 || result.data.return_code === 3) {
+            await Order.findOneAndUpdate({ app_trans_id }, { payment_status: 'failed', status: 'canceled' });
+        }
         return res.status(200).json(result.data);
     } catch (error) {
         return res.status(500).json(error)

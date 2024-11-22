@@ -315,6 +315,15 @@ exports.deleteUser = async (req, res) => {
             return res.status(403).json({ message: 'Cannot delete other admin accounts' });
         }
 
+        const userOrders = await Order.find({ user_id: req.params.id });
+
+        if (userOrders.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot delete user because they have ${userOrders.length} order(s)`
+            });
+        }
+
         await User.findByIdAndDelete(req.params.id);
         res.json({ message: 'User deleted successfully' });
     } catch (error) {

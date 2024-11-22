@@ -181,6 +181,15 @@ exports.deletePaymentMethod = async (req, res) => {
             });
         }
 
+
+        const existingOrders = await Order.findOne({ payment_method: req.params.id });
+        if (existingOrders) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete payment method as it is being used in existing orders'
+            });
+        }
+
         // Remove image if exists
         if (paymentMethod.img) {
             const imagePath = path.join('public', paymentMethod.img);
