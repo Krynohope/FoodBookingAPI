@@ -238,19 +238,37 @@ exports.createUser = async (req, res) => {
     const { fullname, email, password, phone, role } = req.body;
 
     try {
+        // Kiểm tra email đã tồn tại
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Kiểm tra định dạng phone
+        if (
+            phone &&
+            !/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(phone)
+        ) {
+            return res.status(400).json({ message: 'Invalid phone number format' });
+        }
+
+        // Nếu không có address, tạo user không có phone trong address
         user = new User({
             fullname,
             email,
             password,
-            phone,
-            role
+            role: role || 'user',
+            // Chỉ thêm address nếu có phone
+            ...(phone && {
+                address: [
+                    {
+                        phone: phone,
+                        receiver: fullname, // Mặc định lấy tên người dùng
+                        address: 'chưa được cập nhật', // Để trống địa chỉ nếu chưa có
+                    },
+                ],
+            }),
         });
-
 
         await user.save();
 
@@ -259,8 +277,19 @@ exports.createUser = async (req, res) => {
 
         res.status(201).json(userResponse);
     } catch (error) {
-        console.error('Error in createUser:', error.message);
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Error in createUser:', error);
+
+        // Xử lý các lỗi validation của Mongoose
+        if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(
+                (err) => err.message
+            );
+            return res
+                .status(400)
+                .json({ message: 'Validation Error', errors: validationErrors });
+        }
+
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
 
