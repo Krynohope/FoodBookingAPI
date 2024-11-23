@@ -21,7 +21,7 @@ const UserSchema = new mongoose.Schema({
         required: true,
     },
     avatar: {
-        default: `${process.env.DOMAIN}/images/default.jpg`,
+        default: 'default.jpg',
         type: String,
         trim: true
     },
