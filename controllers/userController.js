@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
+const Order = require('../models/Order');
 const { removeUploadedFile } = require('../middlewares/uploadFile');
 const path = require('path');
 const fs = require('fs');
