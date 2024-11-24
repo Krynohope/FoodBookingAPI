@@ -41,8 +41,8 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         return res.status(400).json({ errors: errors.array() });
     }
@@ -52,8 +52,8 @@ exports.updateProfile = async (req, res) => {
     try {
         let user = await User.findById(req.user.id);
         if (!user) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(404).json({ message: 'User not found' });
         }
@@ -63,14 +63,17 @@ exports.updateProfile = async (req, res) => {
         if (phone) user.phone = phone;
 
         // Handle avatar upload
-        if (req.file) {
-            if (user.avatar) {
-                const oldPath = path.join('public', user.avatar.replace(process.env.DOMAIN, ''));
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
+        if (req.fileData) {
+            // Remove old avatar from Google Drive if exists
+            if (user.avatar && user.avatar.fileId) {
+                await removeUploadedFile(user.avatar.fileId);
             }
-            user.avatar = `${req.file.filename}`;
+
+            // Update with new avatar data
+            user.avatar = {
+                fileId: req.fileData.fileId,
+                downloadUrl: req.fileData.downloadLink
+            };
         }
 
         await user.save();
@@ -82,8 +85,8 @@ exports.updateProfile = async (req, res) => {
             data: updatedUser
         });
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Error in updateProfile:', error.message);
         res.status(500).json({ message: 'Server Error' });

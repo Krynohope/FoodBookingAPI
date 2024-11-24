@@ -74,10 +74,12 @@ exports.getPaymentMethodById = async (req, res) => {
 // Create payment method
 exports.createPaymentMethod = async (req, res) => {
     try {
+        // Validate request
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            // If there's an uploaded file, remove it from Google Drive
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(400).json({
                 success: false,
@@ -86,14 +88,20 @@ exports.createPaymentMethod = async (req, res) => {
         }
 
         const { name, type, description, status } = req.body;
-        const imgPath = req.file ? `${req.file.filename}` : null;
+
+        // Handle image data from Google Drive upload
+        const imageData = req.fileData ? {
+            url: req.fileData.downloadLink,
+            fileId: req.fileData.fileId
+        } : null;
 
         const paymentMethod = new Payment_method({
             name,
             type,
             description,
             status,
-            img: imgPath
+            img: imageData ? imageData.url : null,
+            imgFileId: imageData ? imageData.fileId : null
         });
 
         await paymentMethod.save();
@@ -105,8 +113,9 @@ exports.createPaymentMethod = async (req, res) => {
         });
 
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        // If there's an error and a file was uploaded, remove it from Google Drive
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Create payment method error:', error);
         res.status(500).json({
@@ -119,10 +128,10 @@ exports.createPaymentMethod = async (req, res) => {
 // Update payment method
 exports.updatePaymentMethod = async (req, res) => {
     try {
-        let paymentMethod = await Payment_method.findById(req.params.id);
+        const paymentMethod = await Payment_method.findById(req.params.id);
         if (!paymentMethod) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(404).json({
                 success: false,
@@ -130,28 +139,25 @@ exports.updatePaymentMethod = async (req, res) => {
             });
         }
 
-        const updateData = {};
-        if (req.body.name) updateData.name = req.body.name;
-        if (req.body.type) updateData.type = req.body.type;
-        if (req.body.description) updateData.description = req.body.description;
-        if (req.body.status) updateData.status = req.body.status;
+        // Update basic fields
+        if (req.body.name) paymentMethod.name = req.body.name;
+        if (req.body.type) paymentMethod.type = req.body.type;
+        if (req.body.description) paymentMethod.description = req.body.description;
+        if (req.body.status) paymentMethod.status = req.body.status;
 
-        if (req.file) {
-            // Remove old image if exists
-            if (paymentMethod.img) {
-                const oldPath = path.join('public', paymentMethod.img);
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
+        // Handle new image upload
+        if (req.fileData) {
+            // Remove old image from Google Drive if it exists
+            if (paymentMethod.imgFileId) {
+                await removeUploadedFile(paymentMethod.imgFileId);
             }
-            updateData.img = `/${req.file.filename}`;
+
+            // Update with new image data
+            paymentMethod.img = req.fileData.downloadLink;
+            paymentMethod.imgFileId = req.fileData.fileId;
         }
 
-        paymentMethod = await Payment_method.findByIdAndUpdate(
-            req.params.id,
-            updateData,
-            { new: true, runValidators: true }
-        );
+        await paymentMethod.save();
 
         res.json({
             success: true,
@@ -160,8 +166,9 @@ exports.updatePaymentMethod = async (req, res) => {
         });
 
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        // Clean up uploaded file if there was an error
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Update payment method error:', error);
         res.status(500).json({
@@ -182,7 +189,6 @@ exports.deletePaymentMethod = async (req, res) => {
             });
         }
 
-
         const existingOrders = await Order.findOne({ payment_method: req.params.id });
         if (existingOrders) {
             return res.status(400).json({
@@ -191,12 +197,9 @@ exports.deletePaymentMethod = async (req, res) => {
             });
         }
 
-        // Remove image if exists
-        if (paymentMethod.img) {
-            const imagePath = path.join('public', paymentMethod.img);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
+        // Remove image from Google Drive if it exists
+        if (paymentMethod.imgFileId) {
+            await removeUploadedFile(paymentMethod.imgFileId);
         }
 
         await paymentMethod.deleteOne();

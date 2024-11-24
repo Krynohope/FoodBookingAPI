@@ -8,7 +8,7 @@ const categoryController = require('../controllers/categoryController');
 const orderController = require('../controllers/orderController');
 const payment_methodController = require('../controllers/payment_methodController');
 const voucherController = require('../controllers/voucherController');
-const { upload, handleMulterError } = require('../middlewares/uploadFile');
+const { upload, handleFileUpload, handleMulterError } = require('../middlewares/uploadFile');
 const { body } = require('express-validator');
 
 router.use(authMiddleware('admin'));
@@ -42,18 +42,18 @@ router.get('/menus', [
 
 router.post('/menus', [
     upload.single('img'),
+    handleFileUpload,
     check('name', 'Name is required').not().isEmpty(),
     check('price', 'Price must be a positive number').isFloat({ min: 0 }),
-    check('quantity', 'Quantity must be a positive number').isFloat({ min: 0 }),
     check('category', 'Category  is required').not().isEmpty(),
     check('description').optional().trim()
 ], menuController.createMenuItem);
 
 router.patch('/menus/:id', [
     upload.single('img'),
+    handleFileUpload,
     check('name').optional().not().isEmpty(),
     check('price').optional().isFloat({ min: 0 }),
-    check('quantity').optional().isFloat({ min: 0 }),
     check('category').optional().not().isEmpty(),
     check('description').optional().trim()
 ], menuController.updateMenuItem);
@@ -64,12 +64,14 @@ router.delete('/menus/:id', menuController.deleteMenuItem);
 // Category Management Routes
 router.post('/cate/',
     upload.single('img'),
+    handleFileUpload,
     handleMulterError,
     categoryController.createCategory
 );
 
 router.patch('/cate/:id',
     upload.single('img'),
+    handleFileUpload,
     handleMulterError,
     categoryController.updateCategory
 );
@@ -113,12 +115,14 @@ const voucherValidation = [
 
 router.post('/vouchers',
     upload.single('img'),
-    voucherValidation,
+    handleFileUpload,
+    // voucherValidation,
     voucherController.createVoucher
 );
 
 router.patch('/vouchers/:id',
     upload.single('img'),
+    handleFileUpload,
     voucherController.updateVoucher
 );
 
@@ -137,11 +141,13 @@ const paymentMethodValidation = [
 ];
 router.post('/payment_methods',
     upload.single('img'),
+    handleFileUpload,
     paymentMethodValidation,
     payment_methodController.createPaymentMethod
 );
 router.patch('/payment_methods/:id',
     upload.single('img'),
+    handleFileUpload,
     payment_methodController.updatePaymentMethod
 );
 router.delete('/payment_methods/:id', payment_methodController.deletePaymentMethod);

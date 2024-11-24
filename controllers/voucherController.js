@@ -138,8 +138,8 @@ exports.createVoucher = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(400).json({
                 success: false,
@@ -148,7 +148,12 @@ exports.createVoucher = async (req, res) => {
         }
 
         const { name, code, discount_percent, start, end, limit, min_price } = req.body;
-        const imgPath = req.file ? `${req.file.filename}` : null;
+
+        // Handle image data from Google Drive upload
+        const imageData = req.fileData ? {
+            url: req.fileData.downloadLink,
+            fileId: req.fileData.fileId
+        } : null;
 
         const voucher = new Voucher({
             name,
@@ -158,7 +163,8 @@ exports.createVoucher = async (req, res) => {
             end,
             limit,
             min_price,
-            img: imgPath
+            img: imageData ? imageData.url : null,
+            imgFileId: imageData ? imageData.fileId : null
         });
 
         await voucher.save();
@@ -170,8 +176,8 @@ exports.createVoucher = async (req, res) => {
         });
 
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Create voucher error:', error);
         res.status(500).json({
@@ -184,10 +190,10 @@ exports.createVoucher = async (req, res) => {
 // Update voucher (admin only)
 exports.updateVoucher = async (req, res) => {
     try {
-        let voucher = await Voucher.findById(req.params.id);
+        const voucher = await Voucher.findById(req.params.id);
         if (!voucher) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(404).json({
                 success: false,
@@ -195,28 +201,25 @@ exports.updateVoucher = async (req, res) => {
             });
         }
 
-        const updateData = {};
+        // Update basic fields
         const fields = ['name', 'code', 'discount_percent', 'start', 'end', 'limit', 'min_price'];
         fields.forEach(field => {
-            if (req.body[field] !== undefined) updateData[field] = req.body[field];
+            if (req.body[field] !== undefined) voucher[field] = req.body[field];
         });
 
-        if (req.file) {
-            // Remove old image if exists
-            if (voucher.img) {
-                const oldPath = path.join('public', voucher.img);
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
+        // Handle new image upload
+        if (req.fileData) {
+            // Remove old image from Google Drive if it exists
+            if (voucher.imgFileId) {
+                await removeUploadedFile(voucher.imgFileId);
             }
-            updateData.img = `${req.file.filename}`;
+
+            // Update with new image data
+            voucher.img = req.fileData.downloadLink;
+            voucher.imgFileId = req.fileData.fileId;
         }
 
-        voucher = await Voucher.findByIdAndUpdate(
-            req.params.id,
-            updateData,
-            { new: true, runValidators: true }
-        );
+        await voucher.save();
 
         res.json({
             success: true,
@@ -225,8 +228,8 @@ exports.updateVoucher = async (req, res) => {
         });
 
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Update voucher error:', error);
         res.status(500).json({
@@ -255,12 +258,9 @@ exports.deleteVoucher = async (req, res) => {
             });
         }
 
-        // Remove image if exists
-        if (voucher.img) {
-            const imagePath = path.join('public', voucher.img);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
+        // Remove image from Google Drive if it exists
+        if (voucher.imgFileId) {
+            await removeUploadedFile(voucher.imgFileId);
         }
 
         await voucher.deleteOne();

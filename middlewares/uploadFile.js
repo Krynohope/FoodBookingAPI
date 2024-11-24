@@ -1,31 +1,22 @@
-// utils/multerConfig.js
+// utils/driveConfig.js
 const multer = require('multer');
+const { google } = require('googleapis');
 const path = require('path');
-const fs = require('fs');
-
-const uploadDir = './public/images';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-
-    destination: (req, file, cb) => {
-        // const folder = path.join(uploadDir, file.fieldname);
-        // if (!fs.existsSync(folder)) {
-        //     fs.mkdirSync(folder, { recursive: true });
-        // }
-        cb(null, uploadDir);
-    },
+const stream = require('stream');
 
 
-    filename: (req, file, cb) => {
+const KEYFILEPATH = path.join(__dirname, "../cred.json")
 
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-    }
+// Configure Google Drive API
+const auth = new google.auth.GoogleAuth({
+    keyFile: KEYFILEPATH,
+    scopes: ['https://www.googleapis.com/auth/drive']
 });
+
+const drive = google.drive({ version: 'v3', auth });
+
+// Configure multer for temporary storage
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif/;
@@ -48,7 +39,72 @@ const upload = multer({
     }
 });
 
-// Error handler 
+// Upload to Google Drive
+const uploadToDrive = async (file) => {
+    try {
+        const bufferStream = new stream.PassThrough();
+        bufferStream.end(file.buffer);
+
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        const fileName = `${file.fieldname}-${uniqueSuffix}${ext}`;
+
+        const response = await drive.files.create({
+            requestBody: {
+                name: fileName,
+                parents: ['1WJmTcDAEeoS687Hzp8FflfT9YR5btXn9'],
+                mimeType: file.mimetype
+            },
+            media: {
+                mimeType: file.mimetype,
+                body: bufferStream
+            },
+            fields: 'id,webViewLink'
+        });
+
+        // Make the file publicly accessible
+        await drive.permissions.create({
+            fileId: response.data.id,
+            requestBody: {
+                role: 'writer',
+                type: 'anyone'
+            }
+        });
+
+        return {
+            fileId: response.data.id,
+            webViewLink: response.data.webViewLink,
+            // Direct download link
+            downloadLink: `https://drive.google.com/uc?export=view&id=${response.data.id}`
+        };
+    } catch (error) {
+        console.error('Error uploading to Google Drive:', error);
+        throw error;
+    }
+};
+
+// Middleware to handle file upload
+const handleFileUpload = async (req, res, next) => {
+    try {
+        if (!req.file && !req.files) {
+            return next();
+        }
+
+        if (req.file) {
+            // Single file upload
+            const result = await uploadToDrive(req.file);
+            req.fileData = result;
+        } else if (req.files) {
+            // Multiple files upload
+            req.fileData = await Promise.all(req.files.map(uploadToDrive));
+        }
+        next();
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Error handler
 const handleMulterError = (error, req, res, next) => {
     if (error instanceof multer.MulterError) {
         if (error.code === 'LIMIT_FILE_SIZE') {
@@ -69,15 +125,20 @@ const handleMulterError = (error, req, res, next) => {
     next();
 };
 
-//remove uploaded file in case of error
-const removeUploadedFile = (filePath) => {
-    fs.unlink(filePath, (err) => {
-        if (err) console.error('Error removing uploaded file:', err);
-    });
+// Delete file from Google Drive
+const removeUploadedFile = async (fileId) => {
+    try {
+        await drive.files.delete({
+            fileId: fileId
+        });
+    } catch (err) {
+        console.error('Error removing file from Google Drive:', err);
+    }
 };
 
 module.exports = {
     upload,
+    handleFileUpload,
     handleMulterError,
     removeUploadedFile
 };
