@@ -106,49 +106,59 @@ exports.createMenuItem = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(400).json({
                 success: false,
-                errors: errors.array(),
+                errors: errors.array()
             });
         }
 
         const { category, name, description, price, variant } = req.body;
-        // console.log(variant); // variant sẽ là chuỗi JSON nếu được gửi đúng cách
 
-        // Nếu có variant, chuyển chuỗi JSON thành mảng
+        // Parse variant if provided
         let parsedVariant = [];
         if (variant) {
             try {
-                parsedVariant = JSON.parse(variant); // Chuyển chuỗi JSON thành mảng
+                parsedVariant = JSON.parse(variant);
             } catch (e) {
                 console.error('Error parsing variant:', e);
+                if (req.fileData) {
+                    await removeUploadedFile(req.fileData.fileId);
+                }
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid variant format'
+                });
             }
         }
 
+        // Verify category exists
         const cate = await Category.findById(category);
         if (!cate) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(404).json({
                 success: false,
-                message: 'Category not found',
+                message: 'Category not found'
             });
         }
 
+        // Create menu item data
         const menuItemData = {
             category,
             name,
             description,
             price,
-            variant: parsedVariant,
+            variant: parsedVariant
         };
 
-        if (req.file) {
-            menuItemData.img = `/${req.file.filename}`;
+        // Add image data if uploaded
+        if (req.fileData) {
+            menuItemData.img = req.fileData.downloadLink;
+            menuItemData.imgFileId = req.fileData.fileId;
         }
 
         const menuItem = new Menu(menuItemData);
@@ -157,178 +167,111 @@ exports.createMenuItem = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Menu item created successfully',
-            data: menuItem,
+            data: menuItem
         });
+
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Create menu item error:', error);
         res.status(500).json({
             success: false,
             message: 'Error creating menu item',
+            error: error.message
         });
     }
 };
 
-exports.createMenuItem = async (req, res) => {
-    try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
-            }
-            return res.status(400).json({
-                success: false,
-                errors: errors.array(),
-            });
-        }
-
-        const { category, name, description, price, variant } = req.body;
-        console.log(variant); // variant sẽ là chuỗi JSON nếu được gửi đúng cách
-
-        // Nếu có variant, chuyển chuỗi JSON thành mảng
-        let parsedVariant = [];
-        if (variant) {
-            try {
-                parsedVariant = JSON.parse(variant); // Chuyển chuỗi JSON thành mảng
-            } catch (e) {
-                console.error('Error parsing variant:', e);
-            }
-        }
-
-        const cate = await Category.findById(category);
-        if (!cate) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
-            }
-            return res.status(404).json({
-                success: false,
-                message: 'Category not found',
-            });
-        }
-
-        const menuItemData = {
-            category,
-            name,
-            description,
-            price,
-            variant: parsedVariant,
-        };
-
-        if (req.file) {
-            menuItemData.img = `${req.file.filename}`;
-        }
-
-        const menuItem = new Menu(menuItemData);
-        await menuItem.save();
-
-        res.status(201).json({
-            success: true,
-            message: 'Menu item created successfully',
-            data: menuItem,
-        });
-    } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
-        }
-        console.error('Create menu item error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating menu item',
-        });
-    }
-};
 
 // Update menu item
 exports.updateMenuItem = async (req, res) => {
     try {
-        let menuItem = await Menu.findById(req.params.id);
+        const menuItem = await Menu.findById(req.params.id);
         if (!menuItem) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(404).json({
                 success: false,
-                message: 'Menu item not found',
+                message: 'Menu item not found'
             });
         }
 
         const { category, name, description, price, quantity, variant } = req.body;
         const updateData = {};
 
+        // Verify category if provided
         if (category) {
             const cate = await Category.findById(category);
             if (!cate) {
-                if (req.file) {
-                    removeUploadedFile(req.file.path);
+                if (req.fileData) {
+                    await removeUploadedFile(req.fileData.fileId);
                 }
                 return res.status(404).json({
                     success: false,
-                    message: 'Category not found',
+                    message: 'Category not found'
                 });
             }
             updateData.category = category;
         }
 
+        // Update basic fields
         if (name) updateData.name = name;
         if (description) updateData.description = description;
         if (price) updateData.price = price;
         if (quantity) updateData.quantity = quantity;
 
-        if (req.file) {
-            // Xóa ảnh cũ nếu có
-            if (menuItem.img) {
-                const oldPath = path.join('public', menuItem.img);
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
+        // Handle image update
+        if (req.fileData) {
+            // Remove old image from Google Drive if exists
+            if (menuItem.imgFileId) {
+                await removeUploadedFile(menuItem.imgFileId);
             }
-            updateData.img = `${req.file.filename}`;
+            updateData.img = req.fileData.downloadLink;
+            updateData.imgFileId = req.fileData.fileId;
         }
 
+        // Handle variant update
         if (variant === null) {
             updateData.variant = undefined;
         } else if (variant) {
-            // Nếu variant là mảng, chuyển nó thành một mảng hợp lệ
-            let parsedVariant = [];
             try {
-                if (typeof variant === 'string') {
-                    parsedVariant = JSON.parse(variant); // Chuyển chuỗi JSON thành mảng
-                } else if (Array.isArray(variant)) {
-                    parsedVariant = variant; // Đã là mảng, giữ nguyên
-                }
+                updateData.variant = typeof variant === 'string' ? JSON.parse(variant) : variant;
             } catch (error) {
                 console.error('Error parsing variant:', error);
+                if (req.fileData) {
+                    await removeUploadedFile(req.fileData.fileId);
+                }
                 return res.status(400).json({
                     success: false,
-                    message: 'Invalid variant format',
+                    message: 'Invalid variant format'
                 });
             }
-
-            // Lưu variant vào data
-            updateData.variant = parsedVariant;
         }
 
-        // Cập nhật menuItem
-        menuItem = await Menu.findByIdAndUpdate(req.params.id, updateData, {
-            new: true,
-            runValidators: true,
-        }).populate('category', 'name');
+        // Update menu item
+        const updatedMenuItem = await Menu.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true, runValidators: true }
+        ).populate('category', 'name');
 
         res.json({
             success: true,
             message: 'Menu item updated successfully',
-            data: menuItem,
+            data: updatedMenuItem
         });
+
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Update menu item error:', error);
         res.status(500).json({
             success: false,
             message: 'Error updating menu item',
+            error: error.message
         });
     }
 };
@@ -344,12 +287,9 @@ exports.deleteMenuItem = async (req, res) => {
             });
         }
 
-        // Remove image if exists
-        if (menuItem.img) {
-            const imagePath = path.join('public', menuItem.img);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
+        // Remove image from Google Drive if exists
+        if (menuItem.imgFileId) {
+            await removeUploadedFile(menuItem.imgFileId);
         }
 
         await menuItem.deleteOne();
@@ -363,7 +303,8 @@ exports.deleteMenuItem = async (req, res) => {
         console.error('Delete menu item error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error deleting menu item'
+            message: 'Error deleting menu item',
+            error: error.message
         });
     }
 };

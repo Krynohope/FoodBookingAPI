@@ -68,10 +68,12 @@ exports.getCategoryById = async (req, res) => {
 // Create category
 exports.createCategory = async (req, res) => {
     try {
+        // Validate request body
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            // If there was a file uploaded, remove it from Google Drive
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(400).json({
                 success: false,
@@ -80,12 +82,18 @@ exports.createCategory = async (req, res) => {
         }
 
         const { name, description } = req.body;
-        const imgPath = req.file ? `${req.file.filename}` : null;
+
+        // Handle image data from Google Drive upload
+        const imageData = req.fileData ? {
+            url: req.fileData.downloadLink,
+            fileId: req.fileData.fileId
+        } : null;
 
         const category = new Category({
             name,
             description,
-            img: imgPath
+            img: imageData ? imageData.url : null,
+            imgFileId: imageData ? imageData.fileId : null
         });
 
         await category.save();
@@ -97,13 +105,15 @@ exports.createCategory = async (req, res) => {
         });
 
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        // If there was an error and a file was uploaded, clean it up
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Create category error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error creating category'
+            message: 'Error creating category',
+            error: error.message
         });
     }
 };
@@ -111,10 +121,14 @@ exports.createCategory = async (req, res) => {
 // Update category
 exports.updateCategory = async (req, res) => {
     try {
-        let category = await Category.findById(req.params.id);
+        const { id } = req.params;
+        const { name, description } = req.body;
+
+        // Find existing category
+        const category = await Category.findById(id);
         if (!category) {
-            if (req.file) {
-                removeUploadedFile(req.file.path);
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
             }
             return res.status(404).json({
                 success: false,
@@ -122,26 +136,23 @@ exports.updateCategory = async (req, res) => {
             });
         }
 
-        const updateData = {};
-        if (req.body.name) updateData.name = req.body.name;
-        if (req.body.description) updateData.description = req.body.description;
+        // Update fields
+        if (name) category.name = name;
+        if (description) category.description = description;
 
-        if (req.file) {
-            // Remove old image if exists
-            if (category.img) {
-                const oldPath = path.join('public', category.img);
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
+        // Handle new image upload
+        if (req.fileData) {
+            // Remove old image from Google Drive if it exists
+            if (category.imgFileId) {
+                await removeUploadedFile(category.imgFileId);
             }
-            updateData.img = `${req.file.filename}`;
+
+            // Update with new image data
+            category.img = req.fileData.downloadLink;
+            category.imgFileId = req.fileData.fileId;
         }
 
-        category = await Category.findByIdAndUpdate(
-            req.params.id,
-            updateData,
-            { new: true, runValidators: true }
-        );
+        await category.save();
 
         res.json({
             success: true,
@@ -150,13 +161,15 @@ exports.updateCategory = async (req, res) => {
         });
 
     } catch (error) {
-        if (req.file) {
-            removeUploadedFile(req.file.path);
+        // Clean up uploaded file if there was an error
+        if (req.fileData) {
+            await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Update category error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating category'
+            message: 'Error updating category',
+            error: error.message
         });
     }
 };
@@ -164,7 +177,9 @@ exports.updateCategory = async (req, res) => {
 // Delete category
 exports.deleteCategory = async (req, res) => {
     try {
-        const category = await Category.findById(req.params.id);
+        const { id } = req.params;
+
+        const category = await Category.findById(id);
         if (!category) {
             return res.status(404).json({
                 success: false,
@@ -172,35 +187,24 @@ exports.deleteCategory = async (req, res) => {
             });
         }
 
-        const menuItems = await Menu.find({ category: req.params.id });
-        if (menuItems.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: `Cannot delete category because it is referenced by ${menuItems.length} menu items`
-            });
-        }
-
-        // Remove image if exists
-        if (category.img) {
-            const imagePath = path.join('public', category.img);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
+        // Remove image from Google Drive if it exists
+        if (category.imgFileId) {
+            await removeUploadedFile(category.imgFileId);
         }
 
         await category.deleteOne();
 
         res.json({
             success: true,
-            message: 'Category deleted successfully',
-            data: { id: req.params.id }
+            message: 'Category deleted successfully'
         });
 
     } catch (error) {
         console.error('Delete category error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error deleting category'
+            message: 'Error deleting category',
+            error: error.message
         });
     }
 };
