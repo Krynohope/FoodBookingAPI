@@ -736,7 +736,7 @@ exports.getOrderStatistics = async (req, res) => {
                     },
                     canceledOrders: {
                         $sum: {
-                            $cond: [{ $eq: ['$status', 'canceled'] }, 1, 0]
+                            $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0]
                         }
                     }
                 }

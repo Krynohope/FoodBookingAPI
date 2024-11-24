@@ -154,8 +154,8 @@ router.delete('/payment_methods/:id', payment_methodController.deletePaymentMeth
 
 
 // Dashboard Statistics
-router.get('/statistics', authMiddleware('admin'), orderController.getOrderStatistics);
-router.get('/statistics/range', authMiddleware('admin'), orderController.getOrderStatisticsByDateRange);
+router.get('/statistics', orderController.getOrderStatistics);
+router.get('/statistics/range', orderController.getOrderStatisticsByDateRange);
 
 
 module.exports = router;
