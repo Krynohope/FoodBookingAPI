@@ -3,13 +3,26 @@ const multer = require('multer');
 const { google } = require('googleapis');
 const path = require('path');
 const stream = require('stream');
+const dotenv = require('dotenv');
+dotenv.config();
 
+const getCredentials = () => {
+    try {
 
-const KEYFILEPATH = path.join(__dirname, "../cred.json")
+        const credString = process.env.GOOGLE_CRED;
+        const cleanedString = credString.trim().replace(/^{(.*)}$/, '$1');
+        const credentials = JSON.parse(`{${cleanedString}}`);
+        return credentials;
+
+    } catch (error) {
+        console.error('Error parsing Google credentials:', error);
+        throw new Error('Invalid Google credentials format in environment variables');
+    }
+};
 
 // Configure Google Drive API
 const auth = new google.auth.GoogleAuth({
-    keyFile: KEYFILEPATH,
+    credentials: getCredentials(),
     scopes: ['https://www.googleapis.com/auth/drive']
 });
 
