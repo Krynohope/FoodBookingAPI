@@ -23,11 +23,21 @@ exports.getVouchers = async (req, res) => {
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit);
+        // Format image URL
+        const formattedVouchers = vouchers.map(voucher => {
+            const voucherObj = voucher.toObject();
+            if (voucherObj.img) {
+                voucherObj.img = voucherObj.img.startsWith('https')
+                    ? voucherObj.img
+                    : `${process.env.DOMAIN}/images/${voucherObj.img}`;
+            }
+            return voucherObj;
+        });
 
         res.json({
             success: true,
             data: {
-                vouchers,
+                vouchers: formattedVouchers,
                 pagination: {
                     currentPage: page,
                     totalPages: Math.ceil(total / limit),
@@ -55,6 +65,8 @@ exports.getVoucherById = async (req, res) => {
                 message: 'Voucher not found'
             });
         }
+        voucher.img.startsWith('https') ? voucher.img = voucher.img : voucher.img = `${process.env.DOMAIN}/images/${voucher.img}`
+
         res.json({ success: true, data: voucher });
     } catch (error) {
         console.error('Get voucher error:', error);

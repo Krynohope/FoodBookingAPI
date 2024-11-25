@@ -2,8 +2,7 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const { removeUploadedFile } = require('../middlewares/uploadFile');
-const path = require('path');
-const fs = require('fs');
+
 
 
 //Get  user by ID
@@ -30,6 +29,8 @@ exports.getProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+        user.avatar.startsWith('https') ? user.avatar = user.avatar : user.avatar = `${process.env.DOMAIN}/images/${user.avatar}`
+
         res.json(user);
     } catch (error) {
         console.error('Error in getProfile:', error.message);
@@ -58,7 +59,6 @@ exports.updateProfile = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Handle basic profile updates
         if (fullname) user.fullname = fullname;
         if (phone) user.phone = phone;
 
