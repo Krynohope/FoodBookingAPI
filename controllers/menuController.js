@@ -22,7 +22,6 @@ exports.getMenuItems = async (req, res) => {
 
         // Add category filter
         if (req.query.category) {
-
             const category = await Category.findById(req.query.category);
             if (!category) {
                 return res.status(404).json({ message: 'Category not found' });
@@ -30,12 +29,12 @@ exports.getMenuItems = async (req, res) => {
             filter.category = req.query.category;
         }
 
-        // Add  filter by name
+        // Add filter by name
         if (req.query.name) {
             filter.name = { $regex: req.query.name, $options: 'i' };
         }
 
-        // Add price range filter 
+        // Add price range filter
         if (req.query.minPrice || req.query.maxPrice) {
             filter.$or = [
                 { price: { $exists: true, $gte: parseFloat(req.query.minPrice || 0), $lte: parseFloat(req.query.maxPrice || Infinity) } },
@@ -65,16 +64,26 @@ exports.getMenuItems = async (req, res) => {
             .limit(limit)
             .lean();
 
+        // Format image URLs
+        const formattedMenuItems = menuItems.map(item => {
+            const formatted = { ...item };
+
+            if (formatted.img && !formatted.img.startsWith('https')) {
+                formatted.img = `${process.env.DOMAIN}/images/${formatted.img}`;
+            }
+
+            return formatted;
+        });
+
         const totalMenuItems = await Menu.countDocuments(filter);
         const totalPages = Math.ceil(totalMenuItems / limit);
 
         res.json({
-            menuItems,
+            menuItems: formattedMenuItems,
             currentPage: page,
             totalPages,
             totalMenuItems,
             limit,
-
             filters: {
                 category: req.query.category,
                 minPrice: req.query.minPrice,
@@ -86,13 +95,13 @@ exports.getMenuItems = async (req, res) => {
         console.error(error.message);
         res.status(500).json({ message: 'Failed to get menu items', error: error.message });
     }
-}
-
+};
 // Get menu item by ID
 exports.getMenuItemById = async (req, res) => {
     try {
         const menuItem = await Menu.findById(req.params.id).populate('category', 'name');
         if (!menuItem) return res.status(404).json({ message: 'Menu item not found' });
+        menuItem.img.startsWith('https') ? menuItem.img = menuItem.img : menuItem.img = `${process.env.DOMAIN}/images/${menuItem.img}`
         res.json(menuItem);
     } catch (error) {
         console.error(error.message);

@@ -1,9 +1,6 @@
 const { validationResult } = require('express-validator');
 const Category = require('../models/Category');
-const Menu = require('../models/Menu');
 const { removeUploadedFile } = require('../middlewares/uploadFile');
-const path = require('path');
-const fs = require('fs');
 
 // Get categories with name filter
 exports.getCategories = async (req, res) => {
@@ -23,11 +20,21 @@ exports.getCategories = async (req, res) => {
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit);
+        // Format image URLs in the response
+        const formattedCategories = categories.map(category => {
+            const categoryObj = category.toObject();
+            if (categoryObj.img) {
+                categoryObj.img = categoryObj.img.startsWith('https')
+                    ? categoryObj.img
+                    : `${process.env.DOMAIN}/images/${categoryObj.img}`;
+            }
+            return categoryObj;
+        });
 
         res.json({
             success: true,
             data: {
-                categories,
+                categories: formattedCategories,
                 pagination: {
                     currentPage: page,
                     totalPages: Math.ceil(total / limit),
@@ -55,6 +62,8 @@ exports.getCategoryById = async (req, res) => {
                 message: 'Category not found'
             });
         }
+        category.img.startsWith('https') ? category.img = category.img : category.img = `${process.env.DOMAIN}/images/${category.img}`
+
         res.json({ success: true, data: category });
     } catch (error) {
         console.error('Get category error:', error);

@@ -30,10 +30,21 @@ exports.getPaymentMethods = async (req, res) => {
             .skip((page - 1) * limit)
             .limit(limit);
 
+        // Format image URL
+        const formattedPaymentMethods = paymentMethods.map(method => {
+            const methodObj = method.toObject();
+            if (methodObj.img) {
+                methodObj.img = methodObj.img.startsWith('https')
+                    ? methodObj.img
+                    : `${process.env.DOMAIN}/images/${methodObj.img}`;
+            }
+            return methodObj;
+        });
+
         res.json({
             success: true,
             data: {
-                paymentMethods,
+                paymentMethods: formattedPaymentMethods,
                 pagination: {
                     currentPage: page,
                     totalPages: Math.ceil(total / limit),
@@ -61,6 +72,8 @@ exports.getPaymentMethodById = async (req, res) => {
                 message: 'Payment method not found'
             });
         }
+        paymentMethod.img.startsWith('https') ? paymentMethod.img = paymentMethod.img : paymentMethod.img = `${process.env.DOMAIN}/images/${paymentMethod.img}`
+
         res.json({ success: true, data: paymentMethod });
     } catch (error) {
         console.error('Get payment method error:', error);
