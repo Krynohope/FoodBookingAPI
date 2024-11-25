@@ -1,0 +1,5 @@
+# Bỏ qua file .env
+.env
+
+# Bỏ qua toàn bộ thư mục chứa file nhạy cảm (nếu có)
+secrets/
