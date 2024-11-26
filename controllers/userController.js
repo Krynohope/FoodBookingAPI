@@ -210,12 +210,31 @@ exports.getAllUsers = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const users = await User.find()
+        const { fullname, email } = req.query;
+
+        // Build search query
+        let searchQuery = {};
+
+        if (fullname) {
+            searchQuery.fullname = {
+                $regex: new RegExp(fullname, 'i')
+            };
+        }
+
+        if (email) {
+            searchQuery.email = {
+                $regex: new RegExp(email, 'i')
+            };
+        }
+
+        // Apply search query to find users
+        const users = await User.find(searchQuery)
             .select('-password')
             .skip(skip)
             .limit(limit);
 
-        const total = await User.countDocuments();
+        // Get total count with search filters applied
+        const total = await User.countDocuments(searchQuery);
 
         res.json({
             users,
