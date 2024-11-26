@@ -2,8 +2,25 @@ const { validationResult } = require('express-validator');
 const Menu = require('../models/Menu');
 const Category = require('../models/Category');
 const { removeUploadedFile } = require('../middlewares/uploadFile');
-const path = require('path');
-const fs = require('fs');
+
+const createVietnameseRegex = (keyword) => {
+    const vietnameseCharMap = {
+        a: "[aáàạảãâấầậẩẫăắằặẳẵ]",
+        d: "[dđ]",
+        e: "[eéèẹẻẽêếềệểễ]",
+        i: "[iíìịỉĩ]",
+        o: "[oóòọỏõôốồộổỗơớờợởỡ]",
+        u: "[uúùụủũưứừựửữ]",
+        y: "[yýỳỵỷỹ]",
+    };
+
+    // Thay thế từng ký tự bằng regex tương ứng
+    return keyword
+        .toLowerCase()
+        .split("")
+        .map((char) => vietnameseCharMap[char] || char)
+        .join("");
+};
 
 // Get menu items with optional filters and pagination
 exports.getMenuItems = async (req, res) => {
@@ -31,9 +48,9 @@ exports.getMenuItems = async (req, res) => {
 
         // Add filter by name
         if (req.query.name) {
-            filter.name = { $regex: req.query.name, $options: 'i' };
+            const searchQuery = createVietnameseRegex(req.query.name);
+            filter.name = { $regex: searchQuery, $options: 'i' };
         }
-
         // Add price range filter
         if (req.query.minPrice || req.query.maxPrice) {
             filter.$or = [
