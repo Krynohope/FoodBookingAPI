@@ -194,7 +194,7 @@ exports.createOrder = async (req, res) => {
             case 'zalopay':
 
                 const zlpay = await zalopayController.payment(req, res)
-                return window.location.href = zlpay.order_url
+                res.json({ order_url: zlpay.order_url })
 
 
             default:
