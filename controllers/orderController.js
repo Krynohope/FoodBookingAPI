@@ -294,38 +294,89 @@ exports.getAllOrders = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skipIndex = (page - 1) * limit;
+        const { search } = req.query;
 
-        const { status, payment_method } = req.query;
-        let query = {};
+        const lookupStages = [
+            {
+                $lookup: {
+                    from: 'payment_methods',
+                    localField: 'payment_method',
+                    foreignField: '_id',
+                    as: 'payment_method'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'menus',
+                    localField: 'orderDetail.menu_id',
+                    foreignField: '_id',
+                    as: 'menu'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'vouchers',
+                    localField: 'voucher_id',
+                    foreignField: '_id',
+                    as: 'voucher'
+                }
+            }
+        ];
 
-        if (status) query.status = status;
-        if (payment_method) query.payment_method = payment_method;
+        const searchMatchStage = search ? {
+            $match: {
+                $or: [
+                    { order_id: { $regex: new RegExp(search, 'i') } },
+                    { status: { $regex: new RegExp(search, 'i') } },
+                    { payment_status: { $regex: new RegExp(search, 'i') } },
+                    { app_trans_id: { $regex: new RegExp(search, 'i') } },
+                    { 'shipping_address.receiver': { $regex: new RegExp(search, 'i') } },
+                    { 'shipping_address.phone': { $regex: new RegExp(search, 'i') } },
+                    { 'shipping_address.address': { $regex: new RegExp(search, 'i') } },
+                    { 'payment_method.name': { $regex: new RegExp(search, 'i') } }
+                ]
+            }
+        } : { $match: {} };
 
-        const orders = await Order.find(query)
-            .populate([
-                { path: 'user_id', select: 'full_name email' },
-                { path: 'orderDetail.menu_id' },
-                { path: 'payment_method' },
-                { path: 'voucher_id' }
-            ])
-            .sort({ createdAt: -1 })
-            .limit(limit)
-            .skip(skipIndex);
+        const orders = await Order.aggregate([
+            ...lookupStages,
+            searchMatchStage,
+            { $sort: { createdAt: -1 } },
+            { $skip: skipIndex },
+            { $limit: limit }
+        ]);
 
-        const total = await Order.countDocuments(query);
+        const totalPipeline = [
+            ...lookupStages,
+            searchMatchStage,
+            { $count: 'total' }
+        ];
+
+        const total = await Order.aggregate(totalPipeline);
+        const totalOrders = total.length > 0 ? total[0].total : 0;
+
+        const totalPages = Math.ceil(totalOrders / limit);
+        if (totalOrders > 0 && page > totalPages) {
+            return res.status(400).json({
+                message: `Page ${page} does not exist. Total pages available: ${totalPages}`
+            });
+        }
 
         res.json({
             orders,
             currentPage: page,
-            totalPages: Math.ceil(total / limit),
-            totalOrders: total
+            totalPages,
+            totalOrders,
+            limit
         });
     } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Server Error');
+        console.error('Error in getAllOrders:', error);
+        res.status(500).json({
+            message: 'Server Error',
+            error: error.message
+        });
     }
 };
-
 // Update order status (Admin only)
 exports.updateOrderStatus = async (req, res) => {
     try {
