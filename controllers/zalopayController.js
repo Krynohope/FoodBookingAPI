@@ -5,6 +5,9 @@ const moment = require('moment');
 const orderModel = require('../models/Order');
 const Order = require('../models/Order');
 
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const config = {
     app_id: "2554",
@@ -17,7 +20,7 @@ const payment = async (req, res) => {
 
 
     const embed_data = {
-        redirecturl: 'http://localhost:4200/home',
+        redirecturl: process.env.FRONTEND_URL,
     };
 
     const orderData = req.order;
