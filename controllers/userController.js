@@ -40,44 +40,53 @@ exports.getProfile = async (req, res) => {
 
 //Update userprofile
 exports.updateProfile = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        if (req.fileData) {
-            await removeUploadedFile(req.fileData.fileId);
-        }
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { fullname, phone } = req.body;
-
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+
+            if (req.fileData) {
+                await removeUploadedFile(req.fileData.fileId);
+            }
+            return res.status(400).json({
+                success: false,
+                errors: errors.array()
+            });
+        }
+
+        const { fullname } = req.body;
+
         let user = await User.findById(req.user.id);
         if (!user) {
             if (req.fileData) {
                 await removeUploadedFile(req.fileData.fileId);
             }
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
         }
 
         if (fullname) user.fullname = fullname;
-        if (phone) user.phone = phone;
 
-        // Handle avatar upload
+        // Handle new image upload
         if (req.fileData) {
-            // Remove old avatar from Google Drive if exists
-            if (user.avatar && user.avatar.fileId) {
-                await removeUploadedFile(user.avatar.fileId);
+            if (user.imgFileId) {
+                await removeUploadedFile(user.imgFileId);
             }
 
-            // Update with new avatar data
-            user.avatar = {
-                fileId: req.fileData.fileId,
-                downloadUrl: req.fileData.downloadLink
-            };
+            user.avatar = req.fileData.downloadLink;
+            user.imgFileId = req.fileData.fileId;
         }
 
         await user.save();
         const updatedUser = await User.findById(user._id).select('-password');
+
+        // Format avatar URL 
+        if (updatedUser.avatar) {
+            updatedUser.avatar = updatedUser.avatar.startsWith('https')
+                ? updatedUser.avatar
+                : `${process.env.DOMAIN}/images/${updatedUser.avatar}`;
+        }
 
         res.json({
             success: true,
@@ -85,11 +94,16 @@ exports.updateProfile = async (req, res) => {
             data: updatedUser
         });
     } catch (error) {
+        // Clean up uploaded file if there was an error
         if (req.fileData) {
             await removeUploadedFile(req.fileData.fileId);
         }
         console.error('Error in updateProfile:', error.message);
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
     }
 };
 

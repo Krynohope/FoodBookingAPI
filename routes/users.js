@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
 const { check } = require('express-validator');
 const { getProfile, updateProfile, addAddress, updateAddress, removeAddress } = require('../controllers/userController');
-const { upload, handleMulterError } = require('../middlewares/uploadFile');
+const { upload, handleFileUpload, handleMulterError } = require('../middlewares/uploadFile');
 
 router.use(authMiddleware());
 
@@ -14,6 +14,7 @@ router.get('/profile', getProfile);
 //Update profile
 router.patch('/profile',
     upload.single('avatar'),
+    handleFileUpload,
     handleMulterError,
     [
         check('fullname', 'Full name is required').optional().not().isEmpty(),
