@@ -10,17 +10,18 @@ exports.getPaymentMethods = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
-        const { name, type, status } = req.query;
+        const { search } = req.query;
 
         let query = {};
-        if (name) {
-            query.name = { $regex: name, $options: 'i' };
-        }
-        if (type) {
-            query.type = { $regex: type, $options: 'i' };
-        }
-        if (status) {
-            query.status = status;
+
+        if (search) {
+            query = {
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { type: { $regex: search, $options: 'i' } },
+                    { status: { $regex: search, $options: 'i' } }
+                ]
+            };
         }
 
         const total = await Payment_method.countDocuments(query);
