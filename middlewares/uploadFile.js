@@ -88,7 +88,8 @@ const uploadToDrive = async (file) => {
             fileId: response.data.id,
             webViewLink: response.data.webViewLink,
             // Direct download link
-            downloadLink: `https://drive.google.com/uc?export=view&id=${response.data.id}`
+            downloadLink: `https://drive.google.com/uc?export=view&id=${response.data.id}`,
+            thumbnailLink: `https://drive.google.com/thumbnail?id=${response.data.id}&sz=w1000`
         };
     } catch (error) {
         console.error('Error uploading to Google Drive:', error);

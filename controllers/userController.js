@@ -74,7 +74,7 @@ exports.updateProfile = async (req, res) => {
                 await removeUploadedFile(user.imgFileId);
             }
 
-            user.avatar = req.fileData.downloadLink;
+            user.avatar = req.fileData.thumbnailLink;
             user.imgFileId = req.fileData.fileId;
         }
 
