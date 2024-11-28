@@ -183,7 +183,7 @@ exports.createMenuItem = async (req, res) => {
 
         // Add image data if uploaded
         if (req.fileData) {
-            menuItemData.img = req.fileData.downloadLink;
+            menuItemData.img = req.fileData.thumbnailLink;
             menuItemData.imgFileId = req.fileData.fileId;
         }
 
@@ -254,7 +254,7 @@ exports.updateMenuItem = async (req, res) => {
             if (menuItem.imgFileId) {
                 await removeUploadedFile(menuItem.imgFileId);
             }
-            updateData.img = req.fileData.downloadLink;
+            updateData.img = req.fileData.thumbnailLink;
             updateData.imgFileId = req.fileData.fileId;
         }
 

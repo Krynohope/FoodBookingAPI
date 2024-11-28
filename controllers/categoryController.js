@@ -94,7 +94,7 @@ exports.createCategory = async (req, res) => {
 
         // Handle image data from Google Drive upload
         const imageData = req.fileData ? {
-            url: req.fileData.downloadLink,
+            url: req.fileData.thumbnailLink,
             fileId: req.fileData.fileId
         } : null;
 
@@ -157,7 +157,7 @@ exports.updateCategory = async (req, res) => {
             }
 
             // Update with new image data
-            category.img = req.fileData.downloadLink;
+            category.img = req.fileData.thumbnailLink;
             category.imgFileId = req.fileData.fileId;
         }
 

@@ -104,7 +104,7 @@ exports.createPaymentMethod = async (req, res) => {
 
         // Handle image data from Google Drive upload
         const imageData = req.fileData ? {
-            url: req.fileData.downloadLink,
+            url: req.fileData.thumbnailLink,
             fileId: req.fileData.fileId
         } : null;
 
@@ -166,7 +166,7 @@ exports.updatePaymentMethod = async (req, res) => {
             }
 
             // Update with new image data
-            paymentMethod.img = req.fileData.downloadLink;
+            paymentMethod.img = req.fileData.thumbnailLink;
             paymentMethod.imgFileId = req.fileData.fileId;
         }
 
