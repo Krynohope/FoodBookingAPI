@@ -195,21 +195,7 @@ exports.createOrder = async (req, res) => {
             case 'zalopay':
 
                 const zlpay = await zalopayController.payment(req, res)
-                return res.status(201).json({
-                    message: 'Order placed successfully',
-                    order,
-                    order_url: zlpay.order_url,
-                    orderSummary: {
-                        subtotal,
-                        shippingCost,
-                        discount: voucher ? {
-                            name: voucher.name,
-                            discountPercent: voucher.discount_percent,
-                            discountAmount: total - subtotal + shippingCost
-                        } : null,
-                        total
-                    }
-                });
+                return res.status(201).json({ order_url: zlpay.order_url, });
 
 
             default:
