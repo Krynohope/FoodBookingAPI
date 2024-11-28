@@ -193,8 +193,8 @@ exports.createOrder = async (req, res) => {
         const response = {
             message: 'Order placed successfully',
             order,
-            order_url: '',
             orderSummary: {
+                order_url: '',
                 subtotal,
                 shippingCost,
                 discount: voucher ? {
@@ -210,7 +210,7 @@ exports.createOrder = async (req, res) => {
             case 'zalopay':
 
                 const zlpay = await zalopayController.payment(req, res)
-                response.order_url = zlpay.order_url
+                response.orderSummary.order_url = zlpay.order_url
                 return res.status(201).json(response);
 
 
