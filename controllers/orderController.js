@@ -193,7 +193,7 @@ exports.createOrder = async (req, res) => {
         const response = {
             message: 'Order placed successfully',
             order,
-            order_url,
+            order_url: '',
             orderSummary: {
                 subtotal,
                 shippingCost,
@@ -215,8 +215,6 @@ exports.createOrder = async (req, res) => {
 
 
             default:
-
-                response.order_url = ''
                 return res.status(201).json(response);
         }
 
