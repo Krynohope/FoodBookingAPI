@@ -20,7 +20,7 @@ const payment = async (req, res) => {
 
 
     const embed_data = {
-        redirecturl: process.env.FRONTEND_URL,
+        redirecturl: process.env.ZLP_REDIRECT_URL,
     };
 
     const orderData = req.order;
