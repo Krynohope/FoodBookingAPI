@@ -54,7 +54,8 @@ const payment = async (req, res) => {
         const result = await axios.post(config.endpoint, null, { params: order })
         // await Order.findOneAndUpdate({ app_trans_id: dataJson["app_trans_id"] }, { payment_status: 'failed', status: 'canceled' });
 
-        return result.data
+        return res.status(201).json(result.data)
+
     } catch (error) {
         return res.status(400).json(error)
     }
