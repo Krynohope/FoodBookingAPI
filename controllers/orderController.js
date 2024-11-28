@@ -190,31 +190,44 @@ exports.createOrder = async (req, res) => {
 
         const paymentName = await Payment_method.findById(order.payment_method)
 
-        const response = {
-            message: 'Order placed successfully',
-            order,
-            orderSummary: {
-                order_url: '',
-                subtotal,
-                shippingCost,
-                discount: voucher ? {
-                    name: voucher.name,
-                    discountPercent: voucher.discount_percent,
-                    discountAmount: total - subtotal + shippingCost
-                } : null,
-                total
-            }
-        };
 
         switch (paymentName.name.toLowerCase()) {
             case 'zalopay':
 
                 const zlpay = await zalopayController.payment(req, res)
-                response.orderSummary.order_url = zlpay.order_url
-                return res.status(201).json(response);
+                return res.status(201).json({
+                    message: 'Order placed successfully',
+                    order,
+                    order_url: zlpay.order_url,
+                    orderSummary: {
+                        subtotal,
+                        shippingCost,
+                        discount: voucher ? {
+                            name: voucher.name,
+                            discountPercent: voucher.discount_percent,
+                            discountAmount: total - subtotal + shippingCost
+                        } : null,
+                        total
+                    }
+                });
 
 
             default:
+                const response = {
+                    message: 'Order placed successfully',
+                    order,
+                    order_url: '',
+                    orderSummary: {
+                        subtotal,
+                        shippingCost,
+                        discount: voucher ? {
+                            name: voucher.name,
+                            discountPercent: voucher.discount_percent,
+                            discountAmount: total - subtotal + shippingCost
+                        } : null,
+                        total
+                    }
+                };
                 return res.status(201).json(response);
         }
 
