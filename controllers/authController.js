@@ -172,9 +172,9 @@ exports.login = async (req, res) => {
 
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'development',
+            // secure: process.env.NODE_ENV === 'production',
             // sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'None',
-            // secure: true,
+            secure: true,
             sameSite: 'None',
             maxAge: 24 * 60 * 60 * 1000,
             path: '/'
