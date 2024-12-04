@@ -266,7 +266,7 @@ exports.getOrderById = async (req, res) => {
         const order = await Order.findOne({ order_id: req.params.id })
             .populate([
                 { path: 'orderDetail.menu_id' },
-                { path: 'user_id', select: 'full_name email' },
+                { path: 'user_id', select: 'fullname email' },
                 { path: 'payment_method' },
                 { path: 'voucher_id' }
             ]);
@@ -397,8 +397,8 @@ exports.updateOrderStatus = async (req, res) => {
             if (order.status === 'cancelled' && status !== 'cancelled') {
                 return res.status(400).json({ message: 'Cannot change status of cancelled order' });
             }
-            if (order.status === 'completed' && status !== 'completed') {
-                return res.status(400).json({ message: 'Cannot change status of completed order' });
+            if (order.status === 'success' && status !== 'success') {
+                return res.status(400).json({ message: 'Cannot change status of success order' });
             }
             order.status = status;
         }
@@ -522,9 +522,9 @@ exports.postReview = async (req, res) => {
             return res.status(403).json({ message: 'Access forbidden: Not your order' });
         }
 
-        // Verify order is completed
-        if (order.status !== 'completed') {
-            return res.status(400).json({ message: 'Can only review completed orders' });
+        // Verify order is success
+        if (order.status !== 'success') {
+            return res.status(400).json({ message: 'Can only review success orders' });
         }
 
         // Find the specific item in the order
@@ -553,7 +553,7 @@ exports.postReview = async (req, res) => {
         // Populate necessary fields for response
         await order.populate([
             { path: 'orderDetail.menu_id' },
-            { path: 'user_id', select: 'full_name email' }
+            { path: 'user_id', select: 'fullname email' }
         ]);
 
         res.json({
@@ -600,7 +600,7 @@ exports.getMenuReviews = async (req, res) => {
         })
             .populate([
                 { path: 'orderDetail.menu_id' },
-                { path: 'user_id', select: 'full_name email' }
+                { path: 'user_id', select: 'fullname email' }
             ])
             .sort({ updatedAt: -1 })
             .skip(skipIndex)
@@ -700,7 +700,7 @@ exports.getAllReviews = async (req, res) => {
         const orders = await Order.find(matchQuery)
             .populate([
                 { path: 'orderDetail.menu_id' },
-                { path: 'user_id', select: 'full_name email' }
+                { path: 'user_id', select: 'fullname email' }
             ])
             .sort({ updatedAt: -1 })
             .skip(skipIndex)
