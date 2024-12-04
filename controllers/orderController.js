@@ -737,12 +737,19 @@ exports.getAllReviews = async (req, res) => {
 };
 
 exports.getOrderStatistics = async (req, res) => {
-
     try {
         // Get current date
         const currentDate = new Date();
         const currentYear = currentDate.getFullYear();
         const currentMonth = currentDate.getMonth() + 1;
+
+        // Calculate start of current day and week
+        const startOfDay = new Date(currentDate.setHours(0, 0, 0, 0));
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Start of week (Sunday)
+        startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
 
         // Get status counts
         const orderStatusStats = await Order.aggregate([
@@ -762,6 +769,66 @@ exports.getOrderStatistics = async (req, res) => {
                     _id: '$payment_status',
                     count: { $sum: 1 },
                     totalAmount: { $sum: '$total' }
+                }
+            }
+        ]);
+
+        // Get daily statistics
+        const dailyStats = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: startOfDay,
+                        $lt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000)
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    totalAmount: { $sum: '$total' },
+                    averageOrderValue: { $avg: '$total' },
+                    successfulOrders: {
+                        $sum: {
+                            $cond: [{ $eq: ['$status', 'success'] }, 1, 0]
+                        }
+                    },
+                    canceledOrders: {
+                        $sum: {
+                            $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        // Get weekly statistics
+        const weeklyStats = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: startOfWeek,
+                        $lt: endOfWeek
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    totalAmount: { $sum: '$total' },
+                    averageOrderValue: { $avg: '$total' },
+                    successfulOrders: {
+                        $sum: {
+                            $cond: [{ $eq: ['$status', 'success'] }, 1, 0]
+                        }
+                    },
+                    canceledOrders: {
+                        $sum: {
+                            $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0]
+                        }
+                    }
                 }
             }
         ]);
@@ -835,6 +902,15 @@ exports.getOrderStatistics = async (req, res) => {
                 };
                 return acc;
             }, {}),
+            currentDay: {
+                ...dailyStats[0],
+                date: startOfDay.toISOString().split('T')[0]
+            },
+            currentWeek: {
+                ...weeklyStats[0],
+                startDate: startOfWeek.toISOString().split('T')[0],
+                endDate: endOfWeek.toISOString().split('T')[0]
+            },
             currentMonth: {
                 ...monthlyStats[0],
                 month: currentMonth,
@@ -861,7 +937,6 @@ exports.getOrderStatistics = async (req, res) => {
         });
     }
 };
-
 // Get statistics for a specific date range
 exports.getOrderStatisticsByDateRange = async (req, res) => {
     try {

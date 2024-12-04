@@ -291,7 +291,7 @@ exports.createUser = async (req, res) => {
             email,
             password,
             role: role || 'user',
-            // Chỉ thêm address nếu có phone
+            isVerified: true,
             ...(phone && {
                 address: [
                     {
