@@ -67,7 +67,7 @@ exports.getMenuItems = async (req, res) => {
                     sortOption = { 'variant.price': 1, price: 1 };
                     break;
                 case 'price_desc':
-                    sortOption = { 'variant.price': -1, price: -1 };
+                    sortOption = { 'price': -1, price: -1 };
                     break;
                 default:
                     sortOption = {};

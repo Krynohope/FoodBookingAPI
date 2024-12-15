@@ -33,7 +33,7 @@ const sendPasswordResetEmail = (email, token) => {
         from: process.env.EMAIL_USER,
         to: email,
         subject: 'Đặt lại mật khẩu',
-        html: `<p>Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng sử dụng liên kết sau để đặt lại mật khẩu: ${process.env.DOMAIN}/auth/resetPassword/${token}</p>
+        html: `<p>Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng sử dụng liên kết sau để đặt lại mật khẩu: ${process.env.FRONTEND_URL}/auth/resetPassword/${token}</p>
            <p>Liên kết này có hiệu lực trong <b>1 giờ</b>.</p>`,
     };
 
