@@ -757,7 +757,15 @@ exports.getOrderStatistics = async (req, res) => {
                 $group: {
                     _id: '$status',
                     count: { $sum: 1 },
-                    totalAmount: { $sum: '$total' }
+                    totalAmount: {
+                        $sum: {
+                            $cond: [
+                                { $and: [{ $eq: ['$status', 'success'] }, { $eq: ['$payment_status', 'success'] }] },
+                                '$total',
+                                0
+                            ]
+                        }
+                    },
                 }
             }
         ]);
@@ -768,7 +776,15 @@ exports.getOrderStatistics = async (req, res) => {
                 $group: {
                     _id: '$payment_status',
                     count: { $sum: 1 },
-                    totalAmount: { $sum: '$total' }
+                    totalAmount: {
+                        $sum: {
+                            $cond: [
+                                { $and: [{ $eq: ['$status', 'success'] }, { $eq: ['$payment_status', 'success'] }] },
+                                '$total',
+                                0
+                            ]
+                        }
+                    },
                 }
             }
         ]);
@@ -787,7 +803,15 @@ exports.getOrderStatistics = async (req, res) => {
                 $group: {
                     _id: null,
                     totalOrders: { $sum: 1 },
-                    totalAmount: { $sum: '$total' },
+                    totalAmount: {
+                        $sum: {
+                            $cond: [
+                                { $and: [{ $eq: ['$status', 'success'] }, { $eq: ['$payment_status', 'success'] }] },
+                                '$total',
+                                0
+                            ]
+                        }
+                    },
                     averageOrderValue: { $avg: '$total' },
                     successfulOrders: {
                         $sum: {
@@ -817,7 +841,15 @@ exports.getOrderStatistics = async (req, res) => {
                 $group: {
                     _id: null,
                     totalOrders: { $sum: 1 },
-                    totalAmount: { $sum: '$total' },
+                    totalAmount: {
+                        $sum: {
+                            $cond: [
+                                { $and: [{ $eq: ['$status', 'success'] }, { $eq: ['$payment_status', 'success'] }] },
+                                '$total',
+                                0
+                            ]
+                        }
+                    },
                     averageOrderValue: { $avg: '$total' },
                     successfulOrders: {
                         $sum: {
@@ -847,7 +879,15 @@ exports.getOrderStatistics = async (req, res) => {
                 $group: {
                     _id: null,
                     totalOrders: { $sum: 1 },
-                    totalAmount: { $sum: '$total' },
+                    totalAmount: {
+                        $sum: {
+                            $cond: [
+                                { $and: [{ $eq: ['$status', 'success'] }, { $eq: ['$payment_status', 'success'] }] },
+                                '$total',
+                                0
+                            ]
+                        }
+                    },
                     averageOrderValue: { $avg: '$total' },
                     successfulOrders: {
                         $sum: {
@@ -877,7 +917,15 @@ exports.getOrderStatistics = async (req, res) => {
                 $group: {
                     _id: { $month: '$createdAt' },
                     totalOrders: { $sum: 1 },
-                    totalAmount: { $sum: '$total' },
+                    totalAmount: {
+                        $sum: {
+                            $cond: [
+                                { $and: [{ $eq: ['$status', 'success'] }, { $eq: ['$payment_status', 'success'] }] },
+                                '$total',
+                                0
+                            ]
+                        }
+                    },
                     averageOrderValue: { $avg: '$total' }
                 }
             },
@@ -965,7 +1013,15 @@ exports.getOrderStatisticsByDateRange = async (req, res) => {
                 $group: {
                     _id: null,
                     totalOrders: { $sum: 1 },
-                    totalAmount: { $sum: '$total' },
+                    totalAmount: {
+                        $sum: {
+                            $cond: [
+                                { $and: [{ $eq: ['$status', 'success'] }, { $eq: ['$payment_status', 'success'] }] },
+                                '$total',
+                                0
+                            ]
+                        }
+                    },
                     averageOrderValue: { $avg: '$total' },
                     ordersByStatus: {
                         $push: {
