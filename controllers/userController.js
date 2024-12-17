@@ -351,7 +351,7 @@ exports.updateUser = async (req, res) => {
             req.params.id,
             { $set: req.body },
             { new: true }
-        ).select('-password');
+        );
 
         res.json(user);
     } catch (error) {
