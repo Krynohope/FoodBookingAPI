@@ -347,11 +347,9 @@ exports.updateUser = async (req, res) => {
             return res.status(403).json({ message: 'Cannot modify other admin accounts' });
         }
 
-        const user = await User.findByIdAndUpdate(
-            req.params.id,
-            { $set: req.body },
-            { new: true }
-        );
+        Object.assign(userToUpdate, req.body);
+
+        const user = await userToUpdate.save();
 
         res.json(user);
     } catch (error) {
