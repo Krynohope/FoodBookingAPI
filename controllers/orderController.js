@@ -1,14 +1,66 @@
 const { validationResult } = require('express-validator');
 const Order = require('../models/Order');
+const User = require('../models/User');
 const Menu = require('../models/Menu');
 const Voucher = require('../models/Voucher');
 const Payment_method = require('../models/Payment_method');
-const User = require('../models/User');
 const zalopayController = require('./zalopayController')
 const dotenv = require('dotenv');
-const { request } = require('express');
+const nodemailer = require('nodemailer');
+
 
 dotenv.config();
+
+var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+const sendNoti = (email, order) => {
+    const itemsHtml = order.orderDetail.map(item => `
+        <tr>
+            <td>${item.menu_id}</td>
+            <td>${item.quantity}</td>
+            <td>${item.price.toLocaleString('vi-VN')} VND</td>
+            <td>${item.variant_size || 'Không có'}</td>
+        </tr>
+    `).join('');
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: `Thông báo xác nhận đơn hàng: ${order.order_id}`,
+        html: `
+            <h1>Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi!</h1>
+            <p>Đơn hàng của bạn đã được cập nhật trạng thái: <b>${order.status}</b>.</p>
+            <p>Chi tiết đơn hàng:</p>
+            <table border="1" style="border-collapse: collapse; width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Giá</th>
+                        <th>Kích cỡ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+            <p><b>Tổng tiền:</b> ${order.total.toLocaleString('vi-VN')} VND</p>
+            <p><b>Phí giao hàng:</b> ${order.ship.toLocaleString('vi-VN')} VND</p>
+            <p><b>Địa chỉ giao hàng:</b></p>
+            <p>${order.shipping_address.receiver} - ${order.shipping_address.phone}</p>
+            <p>${order.shipping_address.address}</p>
+            <p>Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi!</p>
+        `,
+    };
+
+    return transporter.sendMail(mailOptions);
+};
 
 
 
@@ -388,6 +440,8 @@ exports.updateOrderStatus = async (req, res) => {
 
         const { status, payment_status } = req.body;
         const order = await Order.findOne({ order_id: req.params.id });
+        const user = await User.findById(order.user_id)
+        console.log(user.email);
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
@@ -403,6 +457,7 @@ exports.updateOrderStatus = async (req, res) => {
             order.status = status;
         }
         if (payment_status) order.payment_status = payment_status;
+        if (order.status == 'success' || order.payment_status == 'success') sendNoti(user.email, order)
 
         await order.save();
         await order.populate([
