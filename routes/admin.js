@@ -89,11 +89,6 @@ router.get('/orders', [
 ], orderController.getAllOrders);
 
 router.patch('/orders/:id/status', [
-    authMiddleware('admin'),
-    [
-        check('status').optional().isIn(['pending', 'processing', 'completed', 'cancelled']),
-        check('payment_status').optional().isIn(['pending', 'paid', 'failed'])
-    ]
 ], orderController.updateOrderStatus);
 
 
